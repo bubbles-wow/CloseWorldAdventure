@@ -90,7 +90,7 @@ class Monster {
         this.speed = 2; // 怪物移动速度
         this.health = 100; // 怪物生命值
         this.attackCooldown = 0; // 攻击冷却时间
-        this.attackCooldownTime = 1000; // 攻击冷却时间阈值
+        this.attackCooldownTime = 2000; // 攻击冷却时间阈值
     }
 
     // 处理怪物攻击玩家
@@ -367,6 +367,10 @@ function draw() {
     player.ctx.fillText("Health: " + player.health, 10, 30);
     player.ctx.fillText("Score: " + player.score, 10, 60);
     player.draw();
+    if (player.health <= 0) {
+        player.ctx.clearRect(0, 0, player.canvas.width, player.canvas.height);
+        return;
+    }
     bullets.forEach((bullet) => bullet.draw());
     monsters.forEach((monster) => monster.draw());
 }
@@ -379,9 +383,52 @@ function gameLoop() {
     checkBulletMonsterCollision(bullets, monsters, player);
     draw();
 
-    setTimeout(generateMonsters, 5000);
-    requestAnimationFrame(gameLoop);
+    if (monsters.length == 0) {
+        setTimeout(function () {
+            generateMonsters();
+        }, 5000);
+    }
+    if (player.health <= 0) {
+        //cancelAnimationFrame(animationFrameId);
+        player.ctx.clearRect(0, 0, player.canvas.width, player.canvas.height);
+        gameOver();
+    }
+    animationFrameId = requestAnimationFrame(gameLoop);
 }
 
-// 启动游戏
+function gameOver() {
+    // 显示游戏结束屏幕
+    cancelAnimationFrame(animationFrameId);
+    const canvas = document.getElementById("Canvas");
+    canvas.style.display = "none";
+    const gameOverScreen = document.getElementById("gameOverScreen");
+    gameOverScreen.style.display = "block";
+    gameOverScreen.style.width = canvas.width + "px";
+    gameOverScreen.style.height = canvas.height + "px";
+
+    // 显示玩家的分数
+    const scoreDisplay = document.getElementById("scoreDisplay");
+    scoreDisplay.textContent = player.score;
+
+    // 停止游戏循环或其他游戏逻辑
+
+    // 监听重新开始按钮的点击事件
+    const restartButton = document.getElementById("restartButton");
+    restartButton.addEventListener("click", () => {
+
+        // 隐藏游戏结束屏幕
+        gameOverScreen.style.display = "none";
+        canvas.style.display = "block";
+        // 重置游戏状态
+        player.health = 100;
+        player.score = 0;
+        player.x = canvas.width / 2;
+        player.y = canvas.height / 2;
+        bullets.length = 0;
+        monsters.length = 0;
+        // 重新开始游戏循环或其他游戏逻辑
+    });
+}
+
+let animationFrameId;
 gameLoop();
