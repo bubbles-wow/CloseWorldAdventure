@@ -18,7 +18,7 @@ class Player {
         const newY = this.y + knockbackDistance * knockbackDirectionY;
 
         // 检查是否越界，如果不越界，更新玩家的位置
-        if (newX >= 0 && newX <= this.canvas.width && newY >= 0 && newY <= this.canvas.height) {
+        if (newX >= 0  && newX <= this.canvas.width && newY >= 0 && newY <= this.canvas.height) {
             this.x = newX;
             this.y = newY;
         }
@@ -30,15 +30,15 @@ class Player {
         this.y += this.vy;
 
         // 检查是否越界，如果越界，限制玩家在画布内
-        if (this.x < 0) {
-            this.x = 0;
-        } else if (this.x > this.canvas.width) {
-            this.x = this.canvas.width;
+        if (this.x < this.radius) {
+            this.x = this.radius;
+        } else if (this.x> this.canvas.width - this.radius ) {
+            this.x = this.canvas.width - this.radius;
         }
-        if (this.y < 0) {
-            this.y = 0;
-        } else if (this.y > this.canvas.height) {
-            this.y = this.canvas.height;
+        if (this.y < this.radius) {
+            this.y = this.radius;
+        } else if (this.y> this.canvas.height - this.radius ) {
+            this.y = this.canvas.height - this.radius;
         }
     }
 
@@ -79,7 +79,7 @@ class Bullet {
 }
 
 class Monster {
-    constructor(x, y, canvas) {
+    constructor(x, y, distance, canvas) {
         this.x = x; // 怪物 x 坐标
         this.y = y; // 怪物 y 坐标
         this.vx = 0; // 水平速度
@@ -91,6 +91,7 @@ class Monster {
         this.health = 100; // 怪物生命值
         this.attackCooldown = 0; // 攻击冷却时间
         this.attackCooldownTime = 2000; // 攻击冷却时间阈值
+        this.pursuitPlayerDistance = distance; // 怪物追踪玩家的距离阈值
     }
 
     // 处理怪物攻击玩家
@@ -107,11 +108,11 @@ class Monster {
 
     // 处理怪物追踪玩家
     pursuitPlayer(player) {
-        const dx = player.x - this.x;
-        const dy = player.y - this.y;
-        const distanceToPlayer = Math.sqrt(dx * dx + dy * dy);
-        const directionX = (player.x - this.x) / distanceToPlayer;
-        const directionY = (player.y - this.y) / distanceToPlayer;
+        let dx = player.x - this.x;
+        let dy = player.y - this.y;
+        let distanceToPlayer = Math.sqrt(dx * dx + dy * dy);
+        let directionX = (player.x - this.x) / distanceToPlayer;
+        let directionY = (player.y - this.y) / distanceToPlayer;
         if (distanceToPlayer > this.radius + player.radius + 5) {
             this.x += directionX * this.speed;
             this.y += directionY * this.speed;
@@ -132,10 +133,10 @@ class Monster {
         }
 
         // 限制怪物的游荡范围
-        const minX = this.x - 30; // 左边界的 x 坐标
-        const minY = this.y - 30; // 上边界的 y 坐标
-        const maxX = this.x + 30; // 右边界的 x 坐标
-        const maxY = this.y + 30; // 下边界的 y 坐标
+        let minX = this.x - 30; // 左边界的 x 坐标
+        let minY = this.y - 30; // 上边界的 y 坐标
+        let maxX = this.x + 30; // 右边界的 x 坐标
+        let maxY = this.y + 30; // 下边界的 y 坐标
 
         // 检查怪物是否越界，如果是，则反向移动
         if (this.x < minX || this.x > maxX) {
@@ -158,9 +159,9 @@ class Monster {
 
     // 计算怪物到玩家的距离
     getDistanceToPlayer(player) {
-        const dx = player.x - this.x;
-        const dy = player.y - this.y;
-        const distanceToPlayer = Math.sqrt(dx * dx + dy * dy);
+        let dx = player.x - this.x;
+        let dy = player.y - this.y;
+        let distanceToPlayer = Math.sqrt(dx * dx + dy * dy);
         return distanceToPlayer;
     }
 
@@ -170,7 +171,7 @@ class Monster {
         const distanceToPlayer = this.getDistanceToPlayer(player);
 
         // 如果距离玩家很近，怪物会追踪玩家
-        if (distanceToPlayer < 200) {
+        if (distanceToPlayer < this.pursuitPlayerDistance) {
             this.pursuitPlayer(player);
         }
         else {
@@ -180,8 +181,8 @@ class Monster {
 
     // 处理怪物受到击退效果
     knockback(knockbackDistance, knockbackDirectionX, knockbackDirectionY) {
-        const newX = this.x + knockbackDistance * knockbackDirectionX;
-        const newY = this.y + knockbackDistance * knockbackDirectionY;
+        let newX = this.x + knockbackDistance * knockbackDirectionX;
+        let newY = this.y + knockbackDistance * knockbackDirectionY;
 
         if (
             newX < this.radius ||
@@ -199,8 +200,8 @@ class Monster {
     // 处理怪物受到子弹伤害
     damageByBullet(bullet) {
         this.health -= 10;
-        const directionX = bullet.vx / bullet.speed;
-        const directionY = bullet.vy / bullet.speed;
+        let directionX = bullet.vx / bullet.speed;
+        let directionY = bullet.vy / bullet.speed;
         this.knockback(20, directionX, directionY);
     }
 
@@ -215,7 +216,7 @@ class Monster {
         this.ctx.fillRect(this.x - 15, this.y - this.radius - 10, 30, 5);
 
         this.ctx.fillStyle = "green";
-        const healthBarWidth = (this.health / 100) * 30;
+        let healthBarWidth = (this.health / 100) * 30;
         this.ctx.fillRect(this.x - 15, this.y - this.radius - 10, healthBarWidth, 5);
     }
 }
@@ -300,9 +301,16 @@ function moveBullets() {
 // 生成怪物
 function generateMonsters() {
     if (monsters.length == 0) {
+        let pursuitPlayerDistance;
+        if (canvas.width < canvas.height) {
+            pursuitPlayerDistance = canvas.width / 2;
+        }
+        else {
+            pursuitPlayerDistance = canvas.height / 2;
+        }
         for (let i = 0; i < maxMonsters; i++) {
-            const x = Math.random() * canvas.width;
-            const y = Math.random() * canvas.height;
+            let x = Math.random() * canvas.width;
+            let y = Math.random() * canvas.height;
 
             if (
                 Math.abs(x - player.x) < 100 &&
@@ -321,8 +329,8 @@ function generateMonsters() {
                 i--;
                 continue;
             }
-
-            monsters.push(new Monster(x, y, canvas));
+            
+            monsters.push(new Monster(x, y, pursuitPlayerDistance,canvas));
         }
     }
 }
@@ -341,9 +349,9 @@ function moveMonsters() {
 function checkBulletMonsterCollision(bullets, monsters, player) {
     for (let i = 0; i < bullets.length; i++) {
         for (let j = 0; j < monsters.length; j++) {
-            const dx = bullets[i].x - monsters[j].x;
-            const dy = bullets[i].y - monsters[j].y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
+            let dx = bullets[i].x - monsters[j].x;
+            let dy = bullets[i].y - monsters[j].y;
+            let distance = Math.sqrt(dx * dx + dy * dy);
 
             if (distance < bullets[i].radius + monsters[j].radius) {
                 monsters[j].damageByBullet(bullets[i]);
@@ -399,21 +407,19 @@ function gameLoop() {
 function gameOver() {
     // 显示游戏结束屏幕
     cancelAnimationFrame(animationFrameId);
-    const canvas = document.getElementById("Canvas");
+    let canvas = document.getElementById("Canvas");
     canvas.style.display = "none";
-    const gameOverScreen = document.getElementById("gameOverScreen");
+    let gameOverScreen = document.getElementById("gameOverScreen");
     gameOverScreen.style.display = "block";
     gameOverScreen.style.width = canvas.width + "px";
     gameOverScreen.style.height = canvas.height + "px";
 
     // 显示玩家的分数
-    const scoreDisplay = document.getElementById("scoreDisplay");
+    let scoreDisplay = document.getElementById("scoreDisplay");
     scoreDisplay.textContent = player.score;
 
-    // 停止游戏循环或其他游戏逻辑
-
     // 监听重新开始按钮的点击事件
-    const restartButton = document.getElementById("restartButton");
+    let restartButton = document.getElementById("restartButton");
     restartButton.addEventListener("click", () => {
 
         // 隐藏游戏结束屏幕
