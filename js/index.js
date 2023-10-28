@@ -1,312 +1,387 @@
-const canvas = document.getElementById("Canvas");
-const ctx = canvas.getContext("2d");
+class Player {
+    constructor(canvas) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext("2d");
+        this.x = canvas.width / 2; // 玩家初始 x 坐标
+        this.y = canvas.height / 2; // 玩家初始 y 坐标
+        this.radius = 10; // 玩家半径
+        this.speed = 5; // 玩家移动速度
+        this.health = 100; // 玩家生命值
+        this.score = 0; // 玩家得分
+        this.vx = 0; // 水平速度
+        this.vy = 0; // 垂直速度
+    }
 
-// 设置Canvas的尺寸与窗口大小保持一致
+    // 函数处理玩家受到击退效果
+    knockback(knockbackDistance, knockbackDirectionX, knockbackDirectionY) {
+        const newX = this.x + knockbackDistance * knockbackDirectionX;
+        const newY = this.y + knockbackDistance * knockbackDirectionY;
+
+        // 检查是否越界，如果不越界，更新玩家的位置
+        if (newX >= 0 && newX <= this.canvas.width && newY >= 0 && newY <= this.canvas.height) {
+            this.x = newX;
+            this.y = newY;
+        }
+    }
+
+    // 处理玩家的移动
+    move() {
+        this.x += this.vx;
+        this.y += this.vy;
+
+        // 检查是否越界，如果越界，限制玩家在画布内
+        if (this.x < 0) {
+            this.x = 0;
+        } else if (this.x > this.canvas.width) {
+            this.x = this.canvas.width;
+        }
+        if (this.y < 0) {
+            this.y = 0;
+        } else if (this.y > this.canvas.height) {
+            this.y = this.canvas.height;
+        }
+    }
+
+    // 绘制玩家
+    draw() {
+        this.ctx.fillStyle = "blue";
+        this.ctx.beginPath();
+        this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        this.ctx.fill();
+    }
+}
+
+class Bullet {
+    constructor(x, y, vx, vy, speed, canvas) {
+        this.x = x; // 子弹 x 坐标
+        this.y = y; // 子弹 y 坐标
+        this.vx = vx; // 水平速度
+        this.vy = vy; // 垂直速度
+        this.speed = speed; // 子弹速度
+        this.canvas = canvas;
+        this.ctx = canvas.getContext("2d");
+        this.radius = 5; // 子弹半径
+    }
+
+    // 处理子弹的移动
+    move() {
+        this.x += this.vx;
+        this.y += this.vy;
+    }
+
+    // 绘制子弹
+    draw() {
+        this.ctx.fillStyle = "red";
+        this.ctx.beginPath();
+        this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        this.ctx.fill();
+    }
+}
+
+class Monster {
+    constructor(x, y, canvas) {
+        this.x = x; // 怪物 x 坐标
+        this.y = y; // 怪物 y 坐标
+        this.vx = 0; // 水平速度
+        this.vy = 0; // 垂直速度
+        this.canvas = canvas;
+        this.ctx = canvas.getContext("2d");
+        this.radius = 15; // 怪物半径
+        this.speed = 2; // 怪物移动速度
+        this.health = 100; // 怪物生命值
+        this.attackCooldown = 0; // 攻击冷却时间
+        this.attackCooldownTime = 1000; // 攻击冷却时间阈值
+    }
+
+    // 处理怪物攻击玩家
+    attackPlayer(player, directionX, directionY) {
+        if (this.attackCooldown > 0) {
+            return;
+        }
+        else {
+            this.attackCooldown = this.attackCooldownTime;
+            player.health -= 10;
+            player.knockback(20, directionX, directionY);
+        }
+    }
+
+    // 处理怪物追踪玩家
+    pursuitPlayer(player) {
+        const dx = player.x - this.x;
+        const dy = player.y - this.y;
+        const distanceToPlayer = Math.sqrt(dx * dx + dy * dy);
+        const directionX = (player.x - this.x) / distanceToPlayer;
+        const directionY = (player.y - this.y) / distanceToPlayer;
+        if (distanceToPlayer > this.radius + player.radius + 5) {
+            this.x += directionX * this.speed;
+            this.y += directionY * this.speed;
+        }
+        else {
+            this.attackPlayer(player, directionX, directionY);
+        }
+    }
+
+    // 处理怪物的游荡
+    wander() {
+        // 游荡时速度慢一点
+        const speed = 1.5;
+        // 怪物游荡时随机改变方向
+        if (Math.random() < 0.05) { // 根据需要调整游荡频率
+            this.vx = (Math.random() - 0.5) * speed;
+            this.vy = (Math.random() - 0.5) * speed;
+        }
+
+        // 限制怪物的游荡范围
+        const minX = this.x - 30; // 左边界的 x 坐标
+        const minY = this.y - 30; // 上边界的 y 坐标
+        const maxX = this.x + 30; // 右边界的 x 坐标
+        const maxY = this.y + 30; // 下边界的 y 坐标
+
+        // 检查怪物是否越界，如果是，则反向移动
+        if (this.x < minX || this.x > maxX) {
+            this.vx *= -1;
+        }
+        if (this.y < minY || this.y > maxY) {
+            this.vy *= -1;
+        }
+
+        if (this.x + this.vx < this.radius || this.x + this.vx > this.canvas.width - this.radius) {
+            this.vx = 0;
+        }
+        if (this.y + this.vy < this.radius || this.y + this.vy > this.canvas.height - this.radius) {
+            this.vy = 0;
+        }
+        // 移动怪物
+        this.x += this.vx;
+        this.y += this.vy;
+    }
+
+    // 计算怪物到玩家的距离
+    getDistanceToPlayer(player) {
+        const dx = player.x - this.x;
+        const dy = player.y - this.y;
+        const distanceToPlayer = Math.sqrt(dx * dx + dy * dy);
+        return distanceToPlayer;
+    }
+
+    // 处理怪物的移动
+    move(player) {
+        // 添加游荡效果
+        const distanceToPlayer = this.getDistanceToPlayer(player);
+
+        // 如果距离玩家很近，怪物会追踪玩家
+        if (distanceToPlayer < 200) {
+            this.pursuitPlayer(player);
+        }
+        else {
+            this.wander();
+        }
+    }
+
+    // 处理怪物受到击退效果
+    knockback(knockbackDistance, knockbackDirectionX, knockbackDirectionY) {
+        const newX = this.x + knockbackDistance * knockbackDirectionX;
+        const newY = this.y + knockbackDistance * knockbackDirectionY;
+
+        if (
+            newX < this.radius ||
+            newX > canvas.width - this.radius ||
+            newY < this.radius ||
+            newY > canvas.height - this.radius
+        ) {
+            return;
+        }
+
+        this.x = newX;
+        this.y = newY;
+    }
+
+    // 处理怪物受到子弹伤害
+    damageByBullet(bullet) {
+        this.health -= 10;
+        const directionX = bullet.vx / bullet.speed;
+        const directionY = bullet.vy / bullet.speed;
+        this.knockback(20, directionX, directionY);
+    }
+
+    // 绘制怪物
+    draw() {
+        this.ctx.fillStyle = "red";
+        this.ctx.beginPath();
+        this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        this.ctx.fillStyle = "gray";
+        this.ctx.fillRect(this.x - 15, this.y - this.radius - 10, 30, 5);
+
+        this.ctx.fillStyle = "green";
+        const healthBarWidth = (this.health / 100) * 30;
+        this.ctx.fillRect(this.x - 15, this.y - this.radius - 10, healthBarWidth, 5);
+    }
+}
+
+const canvas = document.getElementById("Canvas");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
-
-// 初始位置
-let playerX = canvas.width / 2;
-let playerY = canvas.height / 2;
-
-// 玩家半径
-const playerRadius = 10;
-
-// 子弹数组
+const player = new Player(canvas);
 const bullets = [];
-
-// 子弹半径
-const bulletRadius = 5;
-
-// 玩家速度
-const playerSpeed = 5;
-
-// 当前玩家速度
-let vPlayerX = 0;
-let vPlayerY = 0;
-
-// 玩家血量
-let playerHealth = 100;
-
-// 玩家分数
-let playerScore = 0;
-
-// 怪物数组
 const monsters = [];
+const maxMonsters = 5;
 
-// 怪物半径
-const monsterRadius = 15;
-
-// 怪物速度
-const monsterSpeed = 2;
-
-// 怪物上限
-const maxMonsters = 5; // 设置怪物的最大数量
-
-// 怪物默认血量
-const monsterHealth = 100;
-
-// 监听窗口大小变化事件
 window.addEventListener("resize", () => {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 });
 
-// 监听鼠标点击事件
-canvas.addEventListener("click", shootBullet);
-
-function shootBullet(event) {
-    // 获取鼠标点击位置
+canvas.addEventListener("click", (event) => {
     const mouseX = event.clientX;
     const mouseY = event.clientY;
-
-    // 计算子弹方向
-    const dx = mouseX - playerX;
-    const dy = mouseY - playerY;
-
-    // 计算子弹速度，可以根据需要调整
+    const dx = mouseX - player.x;
+    const dy = mouseY - player.y;
     const bulletSpeed = 15;
-
-    // 计算子弹的单位方向向量
     const length = Math.sqrt(dx * dx + dy * dy);
     const bulletVX = (dx / length) * bulletSpeed;
     const bulletVY = (dy / length) * bulletSpeed;
+    bullets.push(new Bullet(player.x, player.y, bulletVX, bulletVY, bulletSpeed, canvas));
+});
 
-    // 创建子弹对象并加入数组
-    bullets.push({ x: playerX, y: playerY, vx: bulletVX, vy: bulletVY });
-}
-
-function drawBullets() {
-    ctx.fillStyle = "red";
-    for (let i = 0; i < bullets.length; i++) {
-        ctx.beginPath();
-        ctx.arc(bullets[i].x, bullets[i].y, bulletRadius, 0, Math.PI * 2);
-        ctx.fill();
-    }
-}
-
-// 监听键盘事件
 document.addEventListener("keydown", handleKeyDown);
 document.addEventListener("keyup", handleKeyUp);
 
+// 处理按键按下事件
 function handleKeyDown(event) {
     switch (event.key) {
         case "w":
-            vPlayerY = -playerSpeed;
+            player.vy = -player.speed; // 上
             break;
         case "s":
-            vPlayerY = playerSpeed;
+            player.vy = player.speed; // 下
             break;
         case "a":
-            vPlayerX = -playerSpeed;
+            player.vx = -player.speed; // 左
             break;
         case "d":
-            vPlayerX = playerSpeed;
+            player.vx = player.speed; // 右
             break;
     }
 }
 
+// 处理按键松开事件
 function handleKeyUp(event) {
     switch (event.key) {
         case "w":
         case "s":
-            vPlayerY = 0;
+            player.vy = 0; // 停止垂直移动
             break;
         case "a":
         case "d":
-            vPlayerX = 0;
+            player.vx = 0; // 停止水平移动
             break;
     }
 }
 
-function movePlayer() {
-    // 更新位置
-    playerX += vPlayerX;
-    playerY += vPlayerY;
-
-    // 边界检测
-    if (playerX < 0) {
-        playerX = 0;
-    } else if (playerX > canvas.width) {
-        playerX = canvas.width;
-    }
-    if (playerY < 0) {
-        playerY = 0;
-    } else if (playerY > canvas.height) {
-        playerY = canvas.height;
-    }
-}
-
+// 处理子弹的移动
 function moveBullets() {
     for (let i = 0; i < bullets.length; i++) {
-        bullets[i].x += bullets[i].vx;
-        bullets[i].y += bullets[i].vy;
+        bullets[i].move();
 
-        // 移除超出画布的子弹
-        if (bullets[i].x < 0 || bullets[i].x > canvas.width ||
-            bullets[i].y < 0 || bullets[i].y > canvas.height) {
-            bullets.splice(i, 1);
+        if (
+            bullets[i].x < 0 ||
+            bullets[i].x > canvas.width ||
+            bullets[i].y < 0 ||
+            bullets[i].y > canvas.height
+        ) {
+            bullets.splice(i, 1); // 移除超出画布的子弹
             i--;
         }
     }
 }
 
-// 随机生成怪物
-function generateMonster() {
-
-    if (monsters.length != 0) {
-        return; // 如果已经有怪物，不生成
-    }
-    else {
+// 生成怪物
+function generateMonsters() {
+    if (monsters.length == 0) {
         for (let i = 0; i < maxMonsters; i++) {
             const x = Math.random() * canvas.width;
             const y = Math.random() * canvas.height;
-            if (Math.abs(x - playerX) < 100 && Math.abs(y - playerY) < 100) {
+
+            if (
+                Math.abs(x - player.x) < 100 &&
+                Math.abs(y - player.y) < 100
+            ) {
                 i--;
-                continue; // 如果生成的怪物与玩家距离太近，不生成
+                continue;
             }
-            if (x < monsterRadius || x > canvas.width - monsterRadius || y < monsterRadius || y > canvas.height - monsterRadius) {
+
+            if (
+                x < monsters.radius ||
+                x > canvas.width - monsters.radius ||
+                y < monsters.radius ||
+                y > canvas.height - monsters.radius
+            ) {
                 i--;
-                continue; // 如果生成的怪物在画布边缘，不生成
+                continue;
             }
-            const health = monsterHealth;
-            monsters.push({ x, y, health });
+
+            monsters.push(new Monster(x, y, canvas));
         }
     }
 }
 
-// 移动怪物
+// 处理怪物的移动
 function moveMonsters() {
     for (let i = 0; i < monsters.length; i++) {
-        const monster = monsters[i];
-
-        // 计算怪物与玩家的距离
-        const dx = playerX - monster.x;
-        const dy = playerY - monster.y;
-        const distanceToPlayer = Math.sqrt(dx * dx + dy * dy);
-
-        // 如果怪物距离玩家小于某个阈值，开始追击
-        if (distanceToPlayer < 200) { // 调整阈值以控制触发追击的距离
-            const directionX = (playerX - monster.x) / distanceToPlayer;
-            const directionY = (playerY - monster.y) / distanceToPlayer;
-            monster.x += directionX * monsterSpeed;
-            monster.y += directionY * monsterSpeed;
-        } else {
-            //moveMonsterTo(monster, targetX, targetY, monsterSpeed);
+        monsters[i].move(player);
+        if (monsters[i].attackCooldown > 0) {
+            monsters[i].attackCooldown -= 16; // 每帧减少冷却时间
         }
     }
 }
 
-// 函数用于击退怪物
-function knockbackMonster(monster, knockbackDistance, knockbackDirectionX, knockbackDirectionY) {
-    // 计算怪物的新位置
-    const newX = monster.x + knockbackDistance * knockbackDirectionX;
-    const newY = monster.y + knockbackDistance * knockbackDirectionY;
-
-    // 边界检测
-    if (newX < monsterRadius || newX > canvas.width - monsterRadius || newY < monsterRadius || newY > canvas.height - monsterRadius) {
-        return; // 如果怪物的新位置在画布边缘，不更新怪物的位置
-    }
-
-    // 更新怪物的位置
-    monster.x = newX;
-    monster.y = newY;
-}
-
-// ...
-
-// 在怪物受到伤害时调用击退函数
-function damageMonster(monster) {
-    // 计算击退的距离和方向，可以根据需要调整
-    const knockbackDistance = 20; // 击退距离
-    const dx = playerX - monster.x;
-    const dy = playerY - monster.y;
-    const distanceToPlayer = Math.sqrt(dx * dx + dy * dy);
-    const knockbackDirectionX = (dx / distanceToPlayer) * -1; // 反方向
-    const knockbackDirectionY = (dy / distanceToPlayer) * -1; // 反方向
-
-    // 调用击退函数
-    knockbackMonster(monster, knockbackDistance, knockbackDirectionX, knockbackDirectionY);
-}
-
-// 绘制怪物
-function drawMonsters() {
-    for (let i = 0; i < monsters.length; i++) {
-        ctx.beginPath();
-        ctx.fillStyle = "red";
-        ctx.arc(monsters[i].x, monsters[i].y, monsterRadius, 0, Math.PI * 2);
-        ctx.fill();
-
-        // 绘制血条底部
-        ctx.fillStyle = "gray";
-        ctx.fillRect(monsters[i].x - 15, monsters[i].y - monsterRadius - 10, 30, 5);
-
-        // 绘制血条
-        ctx.fillStyle = "green"; // 使用绿色表示血条
-        const healthBarWidth = (monsters[i].health / 100) * 30; // 根据血量计算血条的宽度
-        ctx.fillRect(monsters[i].x - 15, monsters[i].y - monsterRadius - 10, healthBarWidth, 5);
-    }
-}
-
-// 在游戏循环中检测子弹与怪物的碰撞
-function checkBulletMonsterCollision() {
+// 检查子弹和怪物的碰撞
+function checkBulletMonsterCollision(bullets, monsters, player) {
     for (let i = 0; i < bullets.length; i++) {
         for (let j = 0; j < monsters.length; j++) {
             const dx = bullets[i].x - monsters[j].x;
             const dy = bullets[i].y - monsters[j].y;
             const distance = Math.sqrt(dx * dx + dy * dy);
 
-            if (distance < bulletRadius + monsterRadius) {
-                // 子弹与怪物碰撞
-                bullets.splice(i, 1); // 移除子弹
-                monsters[j].health -= 10; // 减少怪物的血量
-                damageMonster(monsters[j]); // 击退怪物
+            if (distance < bullets[i].radius + monsters[j].radius) {
+                monsters[j].damageByBullet(bullets[i]);
                 if (monsters[j].health <= 0) {
-                    monsters.splice(j, 1); // 如果怪物血量小于等于0，移除怪物
-                    playerScore += 10; // 增加玩家分数
+                    monsters.splice(j, 1); // 移除生命值为 0 的怪物
+                    player.score += 10; // 增加玩家得分
                 }
-                i--; // 减少i以避免跳过下一个子弹
+                bullets.splice(i, 1); // 移除击中的子弹
+                i--;
                 break;
             }
         }
     }
 }
 
+// 绘制画面
 function draw() {
-    // 清除画布
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // 绘制玩家血量
-    ctx.fillStyle = "black";
-    ctx.font = "20px Arial";
-    ctx.fillText("Health: " + playerHealth, 10, 30);
-    ctx.fillText("Score: " + playerScore, 10, 60);
-
-    // 绘制玩家
-    ctx.fillStyle = "blue";
-    ctx.beginPath();
-    ctx.arc(playerX, playerY, playerRadius, 0, Math.PI * 2);
-    ctx.fill();
-
-    // 绘制怪物
-    drawMonsters();
-
-    drawBullets();
+    player.ctx.clearRect(0, 0, player.canvas.width, player.canvas.height);
+    player.ctx.fillStyle = "black";
+    player.ctx.font = "20px Arial";
+    player.ctx.fillText("Health: " + player.health, 10, 30);
+    player.ctx.fillText("Score: " + player.score, 10, 60);
+    player.draw();
+    bullets.forEach((bullet) => bullet.draw());
+    monsters.forEach((monster) => monster.draw());
 }
 
+// 游戏循环
 function gameLoop() {
-
-    movePlayer();
+    player.move();
     moveBullets();
     moveMonsters();
-    checkBulletMonsterCollision();
+    checkBulletMonsterCollision(bullets, monsters, player);
     draw();
 
-
-    setTimeout(generateMonster, 5000); // 5秒后再次生成怪物
-
+    setTimeout(generateMonsters, 5000);
     requestAnimationFrame(gameLoop);
 }
 
-// 启动游戏循环
+// 启动游戏
 gameLoop();
