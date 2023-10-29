@@ -391,7 +391,7 @@ function gameLoop() {
     checkBulletMonsterCollision();
     checkMonsterBulletPlayerCollision()
     draw();
-    if (monsters.length == 0 && rangedMonsters.length == 0) {
+    if (monsters.length == 0 && rangedMonsters.length == 0 && bombers.length == 0) {
         setTimeout(function () {
             generateMonsters();
         }, 5000);
