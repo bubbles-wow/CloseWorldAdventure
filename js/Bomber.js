@@ -11,6 +11,7 @@ export class Bomber {
         this.vy = 0; // 垂直速度
         this.canvas = canvas;
         this.ctx = canvas.getContext("2d");
+        this.score = 40; // 击杀炸弹人分数
         this.damage = 40; // 炸弹人伤害
         this.knockbackDistance = 60; // 炸弹人击退距离
         this.radius = 15; // 炸弹人半径

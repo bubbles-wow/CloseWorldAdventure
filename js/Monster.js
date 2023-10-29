@@ -10,6 +10,7 @@ export class Monster {
         this.vy = 0; // 垂直速度
         this.canvas = canvas;
         this.ctx = canvas.getContext("2d");
+        this.score = 10; // 击杀怪物分数
         this.damage = 10; // 怪物伤害
         this.knockbackDistance = 20; // 怪物击退距离
         this.radius = 15; // 怪物半径

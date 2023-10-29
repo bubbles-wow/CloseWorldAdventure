@@ -270,7 +270,7 @@ function moveMonsterBullets() {
 // 检查子弹和怪物的碰撞
 function checkBulletMonsterCollision() {
     for (let i = 0; i < bullets.length; i++) {
-        let killed = false;
+        let killed = false; // 记录子弹是否击中怪物
         for (let j = 0; j < monsters.length; j++) {
             let dx = bullets[i].x - monsters[j].x;
             let dy = bullets[i].y - monsters[j].y;
@@ -279,8 +279,8 @@ function checkBulletMonsterCollision() {
             if (distance < bullets[i].radius + monsters[j].radius) {
                 monsters[j].damageByBullet(bullets[i]);
                 if (monsters[j].health <= 0) {
+                    player.score += monsters[j].score; // 增加玩家得分
                     monsters.splice(j, 1); // 移除生命值为 0 的怪物
-                    player.score += 10; // 增加玩家得分
                 }
                 bullets.splice(i, 1); // 移除击中的子弹
                 i--;
@@ -288,6 +288,7 @@ function checkBulletMonsterCollision() {
                 break;
             }
         }
+        // 子弹击中怪物后，不再检查子弹和其他怪物的碰撞
         if (killed) {
             break;
         }
@@ -299,19 +300,21 @@ function checkBulletMonsterCollision() {
             if (distance < bullets[i].radius + rangedMonsters[j].radius) {
                 rangedMonsters[j].damageByBullet(bullets[i]);
                 if (rangedMonsters[j].health <= 0) {
+                    player.score += rangedMonsters[j].score; // 增加玩家得分
                     rangedMonsters.splice(j, 1); // 移除生命值为 0 的怪物
-                    player.score += 10; // 增加玩家得分
                 }
                 bullets.splice(i, 1); // 移除击中的子弹
                 i--;
+                killed = true;
                 break;
             }
         }
         if (killed) {
             break;
         }
+        // 检查子弹是否击中炸弹人
         for (let j = 0; j < bombers.length; j++) {
-            if (bombers[j].isDead) {
+            if (bombers[j].isDead || bombers[j].health <= 0) {
                 bombers.splice(j, 1);
                 j--;
                 continue;
@@ -323,11 +326,12 @@ function checkBulletMonsterCollision() {
             if (distance < bullets[i].radius + bombers[j].radius) {
                 bombers[j].damageByBullet(bullets[i]);
                 if (bombers[j].health <= 0) {
+                    player.score += bombers[j].score; // 增加玩家得分
                     bombers.splice(j, 1); // 移除生命值为 0 的怪物
-                    player.score += 10; // 增加玩家得分
                 }
                 bullets.splice(i, 1); // 移除击中的子弹
                 i--;
+                killed = true;
                 break;
             }
         }

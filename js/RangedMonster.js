@@ -12,6 +12,7 @@ export class RangedMonster {
         this.vy = 0; // 垂直速度
         this.canvas = canvas;
         this.ctx = canvas.getContext("2d");
+        this.score = 10; // 击杀怪物分数
         this.radius = 15; // 怪物半径
         this.speed = 2; // 怪物移动速度
         this.health = 100; // 怪物生命值
