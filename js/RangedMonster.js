@@ -64,6 +64,13 @@ export class RangedMonster {
 
         this.x += directionX * this.speed;
         this.y += directionY * this.speed;
+
+        if (this.x < this.radius || this.x > this.canvas.width - this.radius) {
+            this.x -= directionX * this.speed;
+        }
+        if (this.y < this.radius || this.y > this.canvas.height - this.radius) {
+            this.y -= directionY * this.speed;
+        }
     }
 
     // 处理怪物的游荡
@@ -148,13 +155,11 @@ export class RangedMonster {
         let newX = this.x + knockbackDistance * knockbackDirectionX;
         let newY = this.y + knockbackDistance * knockbackDirectionY;
 
-        if (
-            newX < this.radius ||
-            newX > canvas.width - this.radius ||
-            newY < this.radius ||
-            newY > canvas.height - this.radius
-        ) {
-            return;
+        if (newX < this.radius || newX > this.canvas.width - this.radius) {
+            newX -= knockbackDirectionX * knockbackDistance;
+        }
+        if (newY < this.radius || newY > this.canvas.height - this.radius) {
+            newY -= knockbackDirectionY * knockbackDistance;
         }
 
         this.x = newX;
@@ -166,7 +171,7 @@ export class RangedMonster {
         this.health -= 10;
         let directionX = bullet.vx / bullet.speed;
         let directionY = bullet.vy / bullet.speed;
-        this.knockback(20, directionX, directionY);
+        this.knockback(bullet.knockbackDistance, directionX, directionY);
     }
 
     // 绘制怪物

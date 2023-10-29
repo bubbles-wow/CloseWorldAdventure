@@ -8,6 +8,8 @@ export class Bullet {
         this.canvas = canvas;
         this.ctx = canvas.getContext("2d");
         this.radius = 5; // 子弹半径
+        this.damage = 10; // 子弹伤害
+        this.knockbackDistance = 20; // 子弹击退距离
     }
 
     // 处理子弹的移动
@@ -36,6 +38,8 @@ export class MonsterBullet {
         this.canvas = canvas;
         this.ctx = canvas.getContext("2d");
         this.radius = 5; // 子弹半径
+        this.damage = 10; // 子弹伤害
+        this.knockbackDistance = 20; // 子弹击退距离
     }
 
     // 处理子弹的移动

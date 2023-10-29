@@ -10,6 +10,8 @@ export class Monster {
         this.vy = 0; // 垂直速度
         this.canvas = canvas;
         this.ctx = canvas.getContext("2d");
+        this.damage = 10; // 怪物伤害
+        this.knockbackDistance = 20; // 怪物击退距离
         this.radius = 15; // 怪物半径
         this.speed = 2; // 怪物移动速度
         this.health = 100; // 怪物生命值
@@ -25,8 +27,8 @@ export class Monster {
         }
         else {
             this.attackCooldown = this.attackCooldownTime;
-            player.health -= 10;
-            player.knockback(20, directionX, directionY);
+            player.health -= this.damage;
+            player.knockback(this.knockbackDistance, directionX, directionY);
         }
     }
 
@@ -129,13 +131,11 @@ export class Monster {
         let newX = this.x + knockbackDistance * knockbackDirectionX;
         let newY = this.y + knockbackDistance * knockbackDirectionY;
 
-        if (
-            newX < this.radius ||
-            newX > canvas.width - this.radius ||
-            newY < this.radius ||
-            newY > canvas.height - this.radius
-        ) {
-            return;
+        if (newX < this.radius || newX > this.canvas.width - this.radius) {
+            newX -= knockbackDirectionX * knockbackDistance;
+        }
+        if (newY < this.radius || newY > this.canvas.height - this.radius) {
+            newY -= knockbackDirectionY * knockbackDistance;
         }
 
         this.x = newX;
@@ -144,10 +144,10 @@ export class Monster {
 
     // 处理怪物受到子弹伤害
     damageByBullet(bullet) {
-        this.health -= 10;
+        this.health -= bullet.damage;
         let directionX = bullet.vx / bullet.speed;
         let directionY = bullet.vy / bullet.speed;
-        this.knockback(20, directionX, directionY);
+        this.knockback(bullet.knockbackDistance, directionX, directionY);
     }
 
     // 绘制怪物

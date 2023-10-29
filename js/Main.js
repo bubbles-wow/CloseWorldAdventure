@@ -15,6 +15,12 @@ import { monsters } from "./Monster.js";
 import { RangedMonster } from "./RangedMonster.js";
 import { rangedMonsters } from "./RangedMonster.js";
 
+
+import { Bomber } from "./Bomber.js";
+import { BomberExplosion } from "./Bomber.js";
+import { bombers } from "./Bomber.js";
+import { bomberExplosions } from "./Bomber.js";
+
 export const maxObstacles = 15; // 障碍物的最大数量
 export const maxMonsters = 5;
 
@@ -180,11 +186,14 @@ function generateMonsters() {
                 }
             }
 
-            if (type < 50) {
+            if (type < 40) {
                 monsters.push(new Monster(x, y, pursuitPlayerDistance, canvas));
             }
-            else {
+            else if (type < 80) {
                 rangedMonsters.push(new RangedMonster(x, y, pursuitPlayerDistance * 1.5, canvas));
+            }
+            else {
+                bombers.push(new Bomber(x, y, pursuitPlayerDistance, canvas));
             }
         }
     }
@@ -200,11 +209,30 @@ function moveMonsters() {
     }
 }
 
+// 处理远程怪物的移动
 function moveRangedMonsters() {
     for (let i = 0; i < rangedMonsters.length; i++) {
         rangedMonsters[i].move(player, obstacles, monsterBullets);
         if (rangedMonsters[i].attackCooldown > 0) {
             rangedMonsters[i].attackCooldown -= 16; // 每帧减少冷却时间
+        }
+    }
+}
+
+// 处理炸弹人的移动
+function moveBombers() {
+    for (let i = 0; i < bombers.length; i++) {
+        bombers[i].move(player, obstacles, bomberExplosions);
+    }
+}
+
+// 炸弹特效
+function updateBomberExplosions() {
+    for (let i = 0; i < bomberExplosions.length; i++) {
+        bomberExplosions[i].update();
+        if (bomberExplosions[i].opacity <= 0) {
+            bomberExplosions.splice(i, 1);
+            i--;
         }
     }
 }
@@ -282,6 +310,30 @@ function checkBulletMonsterCollision() {
         if (killed) {
             break;
         }
+        for (let j = 0; j < bombers.length; j++) {
+            if (bombers[j].isDead) {
+                bombers.splice(j, 1);
+                j--;
+                continue;
+            }
+            let dx = bullets[i].x - bombers[j].x;
+            let dy = bullets[i].y - bombers[j].y;
+            let distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < bullets[i].radius + bombers[j].radius) {
+                bombers[j].damageByBullet(bullets[i]);
+                if (bombers[j].health <= 0) {
+                    bombers.splice(j, 1); // 移除生命值为 0 的怪物
+                    player.score += 10; // 增加玩家得分
+                }
+                bullets.splice(i, 1); // 移除击中的子弹
+                i--;
+                break;
+            }
+        }
+        if (killed) {
+            break;
+        }
     }
 }
 
@@ -312,6 +364,9 @@ function draw() {
     monsters.forEach((monster) => monster.draw());
     rangedMonsters.forEach((rangedMonster) => rangedMonster.draw());
     monsterBullets.forEach((monsterBullet) => monsterBullet.draw());
+    bombers.forEach((bomber) => bomber.draw());
+    bomberExplosions.forEach((bomberExplosion) => bomberExplosion.draw());
+
     player.ctx.fillStyle = "black";
     player.ctx.font = "20px Arial";
     player.ctx.fillText("Health: " + player.health, 10, 30);
@@ -323,14 +378,16 @@ function draw() {
 function gameLoop() {
     generateObstacles();
     player.move();
+    moveBombers();
     moveBullets();
     moveMonsters();
     moveRangedMonsters()
     moveMonsterBullets();
+    updateBomberExplosions();
     checkBulletMonsterCollision();
     checkMonsterBulletPlayerCollision()
     draw();
-    if (monsters.length == 0) {
+    if (monsters.length == 0 && rangedMonsters.length == 0) {
         setTimeout(function () {
             generateMonsters();
         }, 5000);
@@ -371,9 +428,19 @@ function gameOver() {
         player.y = canvas.height / 2;
         bullets.length = 0;
         monsters.length = 0;
-        // 重新开始游戏循环或其他游戏逻辑
+        rangedMonsters.length = 0;
+        monsterBullets.length = 0;
+        bombers.length = 0;
+        bomberExplosions.length = 0;
+        // 重新开始游戏循环
     });
 }
 
 let animationFrameId;
-gameLoop();
+let gameStartScreen = document.getElementById("gameStartScreen");
+let startButton = document.getElementById("startButton");
+startButton.addEventListener("click", () => {
+    gameStartScreen.style.display = "none";
+    canvas.style.display = "block";
+    gameLoop();
+});
