@@ -48,15 +48,19 @@ document.addEventListener("keyup", handleKeyUp);
 function handleKeyDown(event) {
     switch (event.key) {
         case "w":
+        case "W":
             player.vy = -player.speed; // 上
             break;
         case "s":
+        case "S":
             player.vy = player.speed; // 下
             break;
         case "a":
+        case "A":
             player.vx = -player.speed; // 左
             break;
         case "d":
+        case "D":
             player.vx = player.speed; // 右
             break;
     }
@@ -66,11 +70,15 @@ function handleKeyDown(event) {
 function handleKeyUp(event) {
     switch (event.key) {
         case "w":
+        case "W":
         case "s":
+        case "S":
             player.vy = 0; // 停止垂直移动
             break;
         case "a":
+        case "A":
         case "d":
+        case "D":
             player.vx = 0; // 停止水平移动
             break;
     }
@@ -411,8 +419,6 @@ function gameOver() {
     canvas.style.display = "none";
     let gameOverScreen = document.getElementById("gameOverScreen");
     gameOverScreen.style.display = "block";
-    gameOverScreen.style.width = canvas.width + "px";
-    gameOverScreen.style.height = canvas.height + "px";
 
     // 显示玩家的分数
     let scoreDisplay = document.getElementById("scoreDisplay");
@@ -443,8 +449,19 @@ function gameOver() {
 let animationFrameId;
 let gameStartScreen = document.getElementById("gameStartScreen");
 let startButton = document.getElementById("startButton");
+let helpButton = document.getElementById("helpButton");
+let helpScreen = document.getElementById("helpScreen");
+let closeButton = document.getElementById("closeButton");
 startButton.addEventListener("click", () => {
     gameStartScreen.style.display = "none";
     canvas.style.display = "block";
     gameLoop();
+});
+helpButton.addEventListener("click", () => {
+    helpScreen.style.display = "block";
+    helpButton.style.display = "none";
+});
+closeButton.addEventListener("click", () => {
+    helpScreen.style.display = "none";
+    helpButton.style.display = "block";
 });
