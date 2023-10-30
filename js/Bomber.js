@@ -227,14 +227,20 @@ export class Bomber {
         if (this.isDead) {
             return;
         }
-        this.ctx.fillStyle = "blue";
+        // 自爆前闪烁提示
+        if (this.bombWaitTime / 300 % 2 < 1) {
+            this.ctx.fillStyle = "white";
+        }
+        else {
+            this.ctx.fillStyle = "blue";
+        }
         this.ctx.beginPath();
         this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         this.ctx.fill();
-
+        // 绘制生命值条
         this.ctx.fillStyle = "gray";
         this.ctx.fillRect(this.x - 15, this.y - this.radius - 10, 30, 5);
-
+        // 绘制生命值
         this.ctx.fillStyle = "green";
         let healthBarWidth = (this.health / 100) * 30;
         this.ctx.fillRect(this.x - 15, this.y - this.radius - 10, healthBarWidth, 5);
