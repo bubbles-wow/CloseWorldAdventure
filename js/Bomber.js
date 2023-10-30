@@ -106,18 +106,24 @@ export class Bomber {
             if (distanceToPlayer > this.radius + player.radius + 5) {
                 this.x += directionX * this.speed;
                 this.y += directionY * this.speed;
-
             }
+            // 距离稍远，自爆倒计时重置
             if (distanceToPlayer > this.radius + player.radius + this.pursuitPlayerDistance / 2) {
                 this.bombWaitTime = this.bombTime;
             }
-            
-            if (this.bombWaitTime <= 0 && this.isDead == false) {
+            // 达成自爆条件，自爆
+            else if (this.bombWaitTime <= 0 && this.isDead == false) {
                 this.bomb();
+                return;
             }
+            // 距离较近，自爆倒计时减少
             else {
                 this.bombWaitTime -= 16;
             }
+        }
+        // 脱战重置自爆倒计时
+        else {
+            this.bombWaitTime = this.bombTime;
         }
     }
 
@@ -192,6 +198,7 @@ export class Bomber {
             this.pursuitPlayer();
         }
         else {
+            this.bombWaitTime = this.bombTime;
             this.wander();
         }
 
@@ -228,7 +235,7 @@ export class Bomber {
             return;
         }
         // 自爆前闪烁提示
-        if (this.bombWaitTime / 300 % 2 < 1) {
+        if (this.bombWaitTime / 300 % 2 > 1) {
             this.ctx.fillStyle = "white";
         }
         else {
