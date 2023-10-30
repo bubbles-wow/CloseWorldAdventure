@@ -4,11 +4,11 @@ const app = express();
 
 app.use(express.static(path.join(__dirname, 'game')));
 
-app.get('/', function (req, res) {
-  res.sendFile(path.join(__dirname, 'game', 'index.html'));
+app.get('/', (res) => {
+    res.sendFile(path.join(__dirname, 'game', 'index.html'));
 });
 
 const port = 8080;
-app.listen(port, function () {
+app.listen(port, () => {
     console.log(`App is running on http://localhost:${port}/`);
 });
