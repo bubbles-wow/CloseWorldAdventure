@@ -37,6 +37,7 @@ import { Reward } from "./Reward.js";
 export const maxObstacles = 15; // 障碍物的最大数量
 export const maxMonsters = 5;
 let isPause = false; // 是否暂停游戏
+let isHelp = false; // 是否打开帮助界面
 const maxSpeedItem = 1;
 const maxShieldItem = 1;
 
@@ -556,7 +557,7 @@ document.addEventListener("keydown", function (event) {
 
 // 游戏循环
 function gameLoop() {
-    if (!isPause) {
+    if (!isPause && !isHelp || !isHelp && isPause) {
         generateObstacles();
         player.move();
         moveBombers();
@@ -649,8 +650,10 @@ startButton.addEventListener("click", () => {
 helpButton.addEventListener("click", () => {
     helpScreen.style.display = "block";
     helpButton.style.display = "none";
+    isHelp = true;
 });
 closeButton.addEventListener("click", () => {
     helpScreen.style.display = "none";
     helpButton.style.display = "block";
+    isHelp = false;
 });
