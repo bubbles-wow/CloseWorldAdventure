@@ -1,4 +1,4 @@
-import { player } from "./Player.js";
+import { Player, player } from "./Player.js";
 import { canvas } from "./Player.js";
 
 import { Obstacle } from "./Obstacle.js";
@@ -21,8 +21,24 @@ import { BomberExplosion } from "./Bomber.js";
 import { bombers } from "./Bomber.js";
 import { bomberExplosions } from "./Bomber.js";
 
+import { BloodParticle } from "./BloodParticle.js";
+import { particles } from "./BloodParticle.js";
+
+import { SpeedItem } from "./item.js";
+import { ShieldsItem } from "./item.js";
+import { speedItems } from "./item.js";
+import { shieldItems } from "./item.js";
+
+import { DropLoot } from "./DropLoot.js";
+import { dropLoots } from "./DropLoot.js";
+
+import { Reward } from "./Reward.js";
+
 export const maxObstacles = 15; // 障碍物的最大数量
 export const maxMonsters = 5;
+let isPause = false; // 是否暂停游戏
+const maxSpeedItem = 1;
+const maxShieldItem = 1;
 
 window.addEventListener("resize", () => {
     canvas.width = window.innerWidth;
@@ -109,6 +125,129 @@ function moveBullets() {
                 bullets.splice(i, 1); // 移除击中的子弹
                 i--;
                 break;
+            }
+        }
+    }
+}
+
+export function generateBloodSplash(x, y) {
+    for (let i = 0; i < 50; i++) {
+        const radius = Math.random() * 5 + 2;
+        const particle = new BloodParticle(x, y, radius, canvas);
+        particles.push(particle);
+    }
+}
+
+function moveBloodSplash() {
+    for (let i = 0; i < particles.length; i++) {
+        particles[i].update();
+        if (particles[i].alpha <= 0) {
+            particles.splice(i, 1);
+            i--;
+        }
+    }
+}
+
+// 掉落物生成
+function generateDropLoot(x, y) {
+    const dropChance = Math.random();
+    if (dropChance < 0.6) {
+        dropLoots.push(new DropLoot(x, y, canvas));
+    }
+}
+
+// 拾取掉落物
+function getDropLoot() {
+    for (let i = 0; i < dropLoots.length; i++) {
+        const dx2 = player.x - dropLoots[i].x;
+        const dy2 = player.y - dropLoots[i].y;
+        const distance2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+
+        if (distance2 < player.radius + dropLoots[i].radius) {
+            player.health += 10;
+            if (player.health > player.currentHealth) {
+                player.health = player.health - (player.health - player.currentHealth);
+            }
+            dropLoots.splice(i, 1);
+            i--;
+        }
+    }
+}
+
+// 生成道具
+function generateItem() {
+    if (speedItems.length == 0) {
+        for (let i = 0; i < maxSpeedItem; i++) {
+            const x = Math.random() * canvas.width;
+            const y = Math.random() * canvas.height;
+            if (Math.abs(x - player.x) < 100 && Math.abs(y - player.y) < 100) {
+                i--;
+                continue; // 让道具不太靠近人物
+            }
+            if (x < SpeedItem.radius || x > canvas.width - SpeedItem.radius || y < SpeedItem.radius || y > canvas.height - SpeedItem.radius) {
+                i--;
+                continue; // 保证道具不生成在画布外
+            }
+            speedItems.push(new SpeedItem(x, y, canvas));
+        }
+    }
+}
+
+function generateShieldItem() {
+    if (shieldItems.length == 0) {
+        for (let j = 0; j < maxShieldItem; j++) {
+            const x = Math.random() * canvas.width;
+            const y = Math.random() * canvas.height;
+            if (Math.abs(x - player.x) < 100 && Math.abs(y - player.y) < 100) {
+                j--;
+                continue;
+            }
+            if (x < ShieldsItem.radius || x > canvas.width - ShieldsItem.radius || y < ShieldsItem.radius || y > canvas.height - ShieldsItem.radius) {
+                j--;
+                continue;
+            }
+            shieldItems.push(new ShieldsItem(x, y, canvas));
+        }
+    }
+}
+
+// 拾取道具
+function collectItem() {
+    for (let i = 0; i < speedItems.length; i++) {
+        const dx = player.x - speedItems[i].x;
+        const dy = player.y - speedItems[i].y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance < player.radius + speedItems[i].radius) {
+            // 人物和道具碰撞
+            speedItems.splice(i, 1); // 移除道具
+            if (!SpeedItem.isAmplified) {
+                SpeedItem.isAmplified = true;
+                SpeedItem.duration = 10;
+                player.speed += 10;
+                const timer2 = setInterval(function () {
+                    SpeedItem.duration--;
+                    if (SpeedItem.duration <= 0) {
+                        clearInterval(timer2);
+                        SpeedItem.isAmplified = false;
+                        player.speed = 5;
+                    }
+                }, 1000);
+            }
+        }
+    }
+    for (let j = 0; j < shieldItems.length; j++) {
+        const dx2 = player.x - shieldItems[j].x;
+        const dy2 = player.y - shieldItems[j].y;
+        const distance2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+
+        if (distance2 < player.radius + shieldItems[j].radius) {
+            if (player.shield < 100) {
+                player.shield += 20;
+                if (player.shield > 100) {
+                    player.shield = player.shield - (player.shield - 100);
+                }
+                shieldItems.splice(j, 1);
             }
         }
     }
@@ -288,6 +427,7 @@ function checkBulletMonsterCollision() {
                 monsters[j].damageByBullet(bullets[i]);
                 if (monsters[j].health <= 0) {
                     player.score += monsters[j].score; // 增加玩家得分
+                    generateDropLoot(monsters[j].x, monsters[j].y);
                     monsters.splice(j, 1); // 移除生命值为 0 的怪物
                 }
                 bullets.splice(i, 1); // 移除击中的子弹
@@ -309,6 +449,7 @@ function checkBulletMonsterCollision() {
                 rangedMonsters[j].damageByBullet(bullets[i]);
                 if (rangedMonsters[j].health <= 0) {
                     player.score += rangedMonsters[j].score; // 增加玩家得分
+                    generateDropLoot(rangedMonsters[j].x, rangedMonsters[j].y);
                     rangedMonsters.splice(j, 1); // 移除生命值为 0 的怪物
                 }
                 bullets.splice(i, 1); // 移除击中的子弹
@@ -335,6 +476,7 @@ function checkBulletMonsterCollision() {
                 bombers[j].damageByBullet(bullets[i]);
                 if (bombers[j].health <= 0) {
                     player.score += bombers[j].score; // 增加玩家得分
+                    generateDropLoot(bombers[j].x, bombers[j].y);
                     bombers.splice(j, 1); // 移除生命值为 0 的怪物
                 }
                 bullets.splice(i, 1); // 移除击中的子弹
@@ -358,6 +500,7 @@ function checkMonsterBulletPlayerCollision() {
 
         if (distance < monsterBullets[i].radius + player.radius) {
             player.damageByMonsterBullet(monsterBullets[i]);
+            generateBloodSplash(player.x, player.y);
             monsterBullets.splice(i, 1); // 移除击中的子弹
             i--;
             break;
@@ -371,6 +514,9 @@ function draw() {
     if (player.health <= 0) {
         return;
     }
+    shieldItems.forEach((shieldItem) => shieldItem.draw());
+    speedItems.forEach((speedItem) => speedItem.draw());
+    dropLoots.forEach((dropLoot) => dropLoot.draw());
     obstacles.forEach((obstacle) => obstacle.draw());
     bullets.forEach((bullet) => bullet.draw());
     monsters.forEach((monster) => monster.draw());
@@ -378,36 +524,74 @@ function draw() {
     monsterBullets.forEach((monsterBullet) => monsterBullet.draw());
     bombers.forEach((bomber) => bomber.draw());
     bomberExplosions.forEach((bomberExplosion) => bomberExplosion.draw());
-
+    particles.forEach((particle) => particle.draw());
     player.ctx.fillStyle = "black";
     player.ctx.font = "20px Arial";
     player.ctx.fillText("Health: " + player.health, 10, 30);
-    player.ctx.fillText("Score: " + player.score, 10, 60);
+    player.ctx.fillText("Shield: " + player.shield, 10, 60);
+    player.ctx.fillText("Score: " + player.score, 10, 90);
     player.draw();
 }
 
+// 游戏奖励机制
+function reward() {
+
+}
+
+// 游戏暂停
+document.addEventListener("keydown", function (event) {
+    if (event.keyCode === 32) {
+        isPause = !isPause;
+        if (isPause) {
+            const ctx = canvas.getContext("2d");
+            ctx.fillStyle = "rgb(0, 0, 0, 0.5)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "30px Arial";
+            ctx.fillText("游戏已暂停", canvas.width / 2 - 100, canvas.height / 2);
+            ctx.fill();
+        }
+    }
+})
+
 // 游戏循环
 function gameLoop() {
-    generateObstacles();
-    player.move();
-    moveBombers();
-    moveBullets();
-    moveMonsters();
-    moveRangedMonsters()
-    moveMonsterBullets();
-    updateBomberExplosions();
-    checkBulletMonsterCollision();
-    checkMonsterBulletPlayerCollision()
-    draw();
-    if (monsters.length == 0 && rangedMonsters.length == 0 && bombers.length == 0) {
+    if (!isPause) {
+        generateObstacles();
+        player.move();
+        moveBombers();
+        moveBullets();
+        moveMonsters();
+        moveRangedMonsters();
+        moveBloodSplash();
+        moveMonsterBullets();
+        collectItem();
+        getDropLoot();
+        updateBomberExplosions();
+        checkBulletMonsterCollision();
+        checkMonsterBulletPlayerCollision()
+        draw();
+    }
+    if (monsters.length == 0 && rangedMonsters.length == 0) {
         setTimeout(function () {
             generateMonsters();
+
         }, 5000);
     }
     if (player.health <= 0) {
         //cancelAnimationFrame(animationFrameId);
         player.ctx.clearRect(0, 0, player.canvas.width, player.canvas.height);
         gameOver();
+    }
+    if (speedItems.length == 0) {
+        setTimeout(function () {
+            generateItem();
+        }, 2000);
+    }
+    if (shieldItems.length == 0) {
+        setTimeout(function () {
+            generateShieldItem();
+        }, 2000);
     }
     animationFrameId = requestAnimationFrame(gameLoop);
 }
@@ -419,6 +603,8 @@ function gameOver() {
     canvas.style.display = "none";
     let gameOverScreen = document.getElementById("gameOverScreen");
     gameOverScreen.style.display = "block";
+    gameOverScreen.style.width = canvas.width + "px";
+    gameOverScreen.style.height = canvas.height + "px";
 
     // 显示玩家的分数
     let scoreDisplay = document.getElementById("scoreDisplay");
@@ -434,6 +620,8 @@ function gameOver() {
         // 重置游戏状态
         player.health = 100;
         player.score = 0;
+        player.speed = 5;
+        player.shield = 0;
         player.x = canvas.width / 2;
         player.y = canvas.height / 2;
         bullets.length = 0;
@@ -449,19 +637,8 @@ function gameOver() {
 let animationFrameId;
 let gameStartScreen = document.getElementById("gameStartScreen");
 let startButton = document.getElementById("startButton");
-let helpButton = document.getElementById("helpButton");
-let helpScreen = document.getElementById("helpScreen");
-let closeButton = document.getElementById("closeButton");
 startButton.addEventListener("click", () => {
     gameStartScreen.style.display = "none";
     canvas.style.display = "block";
     gameLoop();
-});
-helpButton.addEventListener("click", () => {
-    helpScreen.style.display = "block";
-    helpButton.style.display = "none";
-});
-closeButton.addEventListener("click", () => {
-    helpScreen.style.display = "none";
-    helpButton.style.display = "block";
 });
