@@ -254,7 +254,7 @@ export class Bomber {
             this.ctx.fillStyle = "white";
         }
         else {
-            this.ctx.fillStyle = "blue";
+            this.ctx.fillStyle = "#98e61a";
         }
         this.ctx.beginPath();
         this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);

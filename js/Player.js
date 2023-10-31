@@ -83,7 +83,7 @@ export class Player {
     // 绘制玩家
     draw() {
         this.ctx.beginPath();
-        this.ctx.fillStyle = "blue";
+        this.ctx.fillStyle = "#f0149c";
         this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         this.ctx.fill();
     }

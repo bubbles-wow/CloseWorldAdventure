@@ -224,7 +224,7 @@ function collectItem() {
             if (!SpeedItem.isAmplified) {
                 SpeedItem.isAmplified = true;
                 SpeedItem.duration = 10;
-                player.speed += 10;
+                player.speed += 3;
                 const timer2 = setInterval(function () {
                     SpeedItem.duration--;
                     if (SpeedItem.duration <= 0) {
@@ -630,6 +630,7 @@ function gameOver() {
         monsterBullets.length = 0;
         bombers.length = 0;
         bomberExplosions.length = 0;
+        particles.length = 0;
         // 重新开始游戏循环
     });
 }

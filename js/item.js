@@ -50,7 +50,7 @@ export class ShieldsItem {
 
     // 绘制护盾类道具
     draw() {
-        this.ctx.fillstyle = "white";
+        this.ctx.fillStyle = "white";
         this.ctx.beginPath();
         this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         this.ctx.fill();
