@@ -538,26 +538,28 @@ function draw() {
 function reward() {
 
 }
-
-// 游戏暂停
-document.addEventListener("keydown", function (event) {
-    if (event.keyCode === 32) {
-        isPause = !isPause;
-        if (isPause) {
-            const ctx = canvas.getContext("2d");
-            ctx.fillStyle = "rgb(0, 0, 0, 0.5)";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = "#ffffff";
-            ctx.font = "30px Arial";
-            ctx.fillText("游戏已暂停", canvas.width / 2 - 100, canvas.height / 2);
-            ctx.fill();
-        }
-    }
-})
+//有bug，待修
+// // 游戏暂停
+// document.addEventListener("keydown", function (event) {
+//     if (event.keyCode === 32) {
+//         isPause = !isPause;
+//         if (isPause) {
+//             const ctx = canvas.getContext("2d");
+//             ctx.fillStyle = "rgb(0, 0, 0, 0.5)";
+//             ctx.fillRect(0, 0, canvas.width, canvas.height);
+//             ctx.fillStyle = "#ffffff";
+//             ctx.font = "30px Arial";
+//             ctx.fillText("游戏已暂停", canvas.width / 2 - 100, canvas.height / 2);
+//             ctx.fill();
+//         }
+//     }
+// })
 
 // 游戏循环
 function gameLoop() {
-    if (!isPause && !isHelp || !isHelp && isPause) {
+    // bug，待修
+    //if (!isPause || !isHelp) {
+    if (!isHelp) {
         generateObstacles();
         player.move();
         moveBombers();
@@ -651,9 +653,12 @@ helpButton.addEventListener("click", () => {
     helpScreen.style.display = "block";
     helpButton.style.display = "none";
     isHelp = true;
+    // 有bug，待修
+    //isPause = true;
 });
 closeButton.addEventListener("click", () => {
     helpScreen.style.display = "none";
     helpButton.style.display = "block";
     isHelp = false;
+    //isPause = false;
 });
