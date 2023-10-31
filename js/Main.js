@@ -637,8 +637,19 @@ function gameOver() {
 let animationFrameId;
 let gameStartScreen = document.getElementById("gameStartScreen");
 let startButton = document.getElementById("startButton");
+let helpButton = document.getElementById("helpButton");
+let helpScreen = document.getElementById("helpScreen");
+let closeButton = document.getElementById("closeButton");
 startButton.addEventListener("click", () => {
     gameStartScreen.style.display = "none";
     canvas.style.display = "block";
     gameLoop();
+});
+helpButton.addEventListener("click", () => {
+    helpScreen.style.display = "block";
+    helpButton.style.display = "none";
+});
+closeButton.addEventListener("click", () => {
+    helpScreen.style.display = "none";
+    helpButton.style.display = "block";
 });

@@ -266,6 +266,7 @@ export class Bomber {
         this.ctx.fillStyle = "green";
         let healthBarWidth = (this.health / 100) * 30;
         this.ctx.fillRect(this.x - 15, this.y - this.radius - 10, healthBarWidth, 5);
+    }
 }
 
 export class BomberExplosion {
