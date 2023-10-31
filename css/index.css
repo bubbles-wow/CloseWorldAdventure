@@ -3,6 +3,7 @@ body {
     margin: 0;
     padding: 0;
     overflow: hidden;
+    z-index: 100;
 }
 #gameOverScreen {
     position: absolute;
@@ -12,16 +13,45 @@ body {
     width: 100%;
     height: 100%;
     display: none;
-    z-index: 100;
+    z-index: 2;
 }
 #gameStartScreen {
+    background-color: blanchedalmond;
     position: absolute;
     text-align: center;
     top: 30%;
     left: 0;
     width: 100%;
     height: 100%;
+    z-index: 2;
+}
+#helpButton {
+    position: absolute;
+    user-select: none;
+    top: 0;
+    right: 0;
+    z-index: 50;
+}
+#helpScreen {
+    background-color: rgba(233, 233, 233, 0.8);
+    border-radius: 10px;
+    position: absolute;
+    text-align: center;
+    font-size: 20px;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
     z-index: 100;
+    padding-top: 10%;
+}
+#Canvas {
+    background-color: blanchedalmond;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
 }
 /* canvas {
     border: 1px solid black;
