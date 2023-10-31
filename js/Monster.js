@@ -1,6 +1,9 @@
 import { obstacles } from "./Obstacle.js";
 import { player } from "./Player.js";
 import { canvas } from "./Player.js";
+import { BloodParticle } from "./BloodParticle.js";
+import { particles } from "./BloodParticle.js";
+import { generateBloodSplash } from "./Main.js";
 
 export class Monster {
     constructor(x, y, distance, canvas) {
@@ -28,7 +31,13 @@ export class Monster {
         }
         else {
             this.attackCooldown = this.attackCooldownTime;
-            player.health -= this.damage;
+            if (player.shield == 0) {
+                player.health -= this.damage;
+            }
+            else {
+                player.shield -= this.damage;
+            }
+            generateBloodSplash(player.x, player.y);
             player.knockback(this.knockbackDistance, directionX, directionY);
         }
     }
@@ -146,6 +155,7 @@ export class Monster {
     // 处理怪物受到子弹伤害
     damageByBullet(bullet) {
         this.health -= bullet.damage;
+        generateBloodSplash(this.x, this.y);
         let directionX = bullet.vx / bullet.speed;
         let directionY = bullet.vy / bullet.speed;
         this.knockback(bullet.knockbackDistance, directionX, directionY);
@@ -153,8 +163,8 @@ export class Monster {
 
     // 绘制怪物
     draw() {
-        this.ctx.fillStyle = "red";
         this.ctx.beginPath();
+        this.ctx.fillStyle = "red";
         this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         this.ctx.fill();
 

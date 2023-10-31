@@ -1,7 +1,10 @@
-import { player } from "./Player.js";
+import { Player, player } from "./Player.js";
 import { obstacles } from "./Obstacle.js";
 import { monsters } from "./Monster.js";
 import { rangedMonsters } from "./RangedMonster.js";
+import { BloodParticle } from "./BloodParticle.js";
+import { particles } from "./BloodParticle.js";
+import { generateBloodSplash } from "./Main.js";
 
 export class Bomber {
     constructor(x, y, distance, canvas) {
@@ -27,7 +30,17 @@ export class Bomber {
     bomb() {
         let distanceToPlayer = this.getDistanceToPlayer();
         if (distanceToPlayer < this.bombRadius + player.radius + this.bombRadius) {
-            player.health -= this.damage;
+            if (player.shield > 0) {
+                if (this.damage > player.shield) {
+                    player.health = player.health - (this.damage - player.shield);
+                    player.shield = 0;
+                } else {
+                    player.shield -= this.damage;
+                }
+            } else {
+                player.health -= this.damage;
+            }
+            generateBloodSplash(player.x, player.y);
             let dx = player.x - this.x;
             let dy = player.y - this.y;
             let directionX = dx / distanceToPlayer;
@@ -106,24 +119,18 @@ export class Bomber {
             if (distanceToPlayer > this.radius + player.radius + 5) {
                 this.x += directionX * this.speed;
                 this.y += directionY * this.speed;
+
             }
-            // 距离稍远，自爆倒计时重置
             if (distanceToPlayer > this.radius + player.radius + this.pursuitPlayerDistance / 2) {
                 this.bombWaitTime = this.bombTime;
             }
-            // 达成自爆条件，自爆
-            else if (this.bombWaitTime <= 0 && this.isDead == false) {
+
+            if (this.bombWaitTime <= 0 && this.isDead == false) {
                 this.bomb();
-                return;
             }
-            // 距离较近，自爆倒计时减少
             else {
                 this.bombWaitTime -= 16;
             }
-        }
-        // 脱战重置自爆倒计时
-        else {
-            this.bombWaitTime = this.bombTime;
         }
     }
 
@@ -198,7 +205,6 @@ export class Bomber {
             this.pursuitPlayer();
         }
         else {
-            this.bombWaitTime = this.bombTime;
             this.wander();
         }
 
@@ -224,6 +230,7 @@ export class Bomber {
     // 处理炸弹人受到子弹伤害
     damageByBullet(bullet) {
         this.health -= bullet.damage;
+        generateBloodSplash(this.x, this.y);
         let directionX = bullet.vx / bullet.speed;
         let directionY = bullet.vy / bullet.speed;
         this.knockback(bullet.knockbackDistance, directionX, directionY);
@@ -234,20 +241,14 @@ export class Bomber {
         if (this.isDead) {
             return;
         }
-        // 自爆前闪烁提示
-        if (this.bombWaitTime / 300 % 2 > 1) {
-            this.ctx.fillStyle = "white";
-        }
-        else {
-            this.ctx.fillStyle = "blue";
-        }
+        this.ctx.fillStyle = "blue";
         this.ctx.beginPath();
         this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         this.ctx.fill();
-        // 绘制生命值条
+
         this.ctx.fillStyle = "gray";
         this.ctx.fillRect(this.x - 15, this.y - this.radius - 10, 30, 5);
-        // 绘制生命值
+
         this.ctx.fillStyle = "green";
         let healthBarWidth = (this.health / 100) * 30;
         this.ctx.fillRect(this.x - 15, this.y - this.radius - 10, healthBarWidth, 5);

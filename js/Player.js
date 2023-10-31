@@ -7,8 +7,10 @@ export class Player {
         this.x = canvas.width / 2; // 玩家初始 x 坐标
         this.y = canvas.height / 2; // 玩家初始 y 坐标
         this.radius = 10; // 玩家半径
+        this.shield = 0;
         this.speed = 5; // 玩家移动速度
         this.health = 100; // 玩家生命值
+        this.currentHealth = 100; // 玩家的生命值上限
         this.score = 0; // 玩家得分
         this.vx = 0; // 水平速度
         this.vy = 0; // 垂直速度
@@ -29,7 +31,12 @@ export class Player {
     }
 
     damageByMonsterBullet(monsterbullet) {
-        this.health -= 10;
+        if (player.shield == 0) {
+            player.health -= 10;
+        }
+        else {
+            player.shield -= 10;
+        }
         let directionX = monsterbullet.vx / monsterbullet.speed;
         let directionY = monsterbullet.vy / monsterbullet.speed;
         this.knockback(20, directionX, directionY);
@@ -75,8 +82,8 @@ export class Player {
 
     // 绘制玩家
     draw() {
-        this.ctx.fillStyle = "blue";
         this.ctx.beginPath();
+        this.ctx.fillStyle = "blue";
         this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         this.ctx.fill();
     }

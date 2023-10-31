@@ -3,6 +3,9 @@ import { obstacles } from "./Obstacle.js";
 import { player } from "./Player.js";
 import { canvas } from "./Player.js";
 import { monsterBullets } from "./Bullet.js";
+import { BloodParticle } from "./BloodParticle.js";
+import { particles } from "./BloodParticle.js";
+import { generateBloodSplash } from "./Main.js";
 
 export class RangedMonster {
     constructor(x, y, distance, canvas) {
@@ -170,6 +173,7 @@ export class RangedMonster {
     // 处理怪物受到子弹伤害
     damageByBullet(bullet) {
         this.health -= 10;
+        generateBloodSplash(this.x, this.y);
         let directionX = bullet.vx / bullet.speed;
         let directionY = bullet.vy / bullet.speed;
         this.knockback(bullet.knockbackDistance, directionX, directionY);
