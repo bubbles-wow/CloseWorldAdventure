@@ -121,16 +121,23 @@ export class Bomber {
                 this.y += directionY * this.speed;
 
             }
+            // 距离稍远，自爆倒计时重置
             if (distanceToPlayer > this.radius + player.radius + this.pursuitPlayerDistance / 2) {
                 this.bombWaitTime = this.bombTime;
             }
-
-            if (this.bombWaitTime <= 0 && this.isDead == false) {
+            // 达成自爆条件，自爆
+            else if (this.bombWaitTime <= 0 && this.isDead == false) {
                 this.bomb();
+                return;
             }
+            // 距离较近，自爆倒计时减少
             else {
                 this.bombWaitTime -= 16;
             }
+        }
+        // 脱战重置自爆倒计时
+        else {
+            this.bombWaitTime = this.bombTime;
         }
     }
 
@@ -205,6 +212,7 @@ export class Bomber {
             this.pursuitPlayer();
         }
         else {
+            this.bombWaitTime = this.bombTime;
             this.wander();
         }
 
@@ -241,18 +249,23 @@ export class Bomber {
         if (this.isDead) {
             return;
         }
-        this.ctx.fillStyle = "blue";
+        // 自爆前闪烁提示
+        if (this.bombWaitTime / 300 % 2 > 1) {
+            this.ctx.fillStyle = "white";
+        }
+        else {
+            this.ctx.fillStyle = "blue";
+        }
         this.ctx.beginPath();
         this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         this.ctx.fill();
-
+        // 绘制生命值条
         this.ctx.fillStyle = "gray";
         this.ctx.fillRect(this.x - 15, this.y - this.radius - 10, 30, 5);
-
+        // 绘制生命值
         this.ctx.fillStyle = "green";
         let healthBarWidth = (this.health / 100) * 30;
         this.ctx.fillRect(this.x - 15, this.y - this.radius - 10, healthBarWidth, 5);
-    }
 }
 
 export class BomberExplosion {
