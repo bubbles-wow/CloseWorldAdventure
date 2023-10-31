@@ -1,12 +1,26 @@
 <!DOCTYPE html>
-<html>
+<html charset="UTF-8">
 
 <head>
     <link rel="stylesheet" href="css/index.css">
 </head>
 
 <body>
-    <canvas id="Canvas"></canvas>
+    <div id="game">
+        <canvas id="Canvas"></canvas>
+        <button id="helpButton">帮助</button>
+    </div>
+    <div id="helpScreen">
+        <h1>帮助</h1>
+        <p>W、A、S、D控制玩家上、左、下、右移动</p>
+        <p>鼠标点击屏幕，玩家会射出一发子弹到点击位置。</p>
+        <p>怪物有三种：<span style="color: red;">近战（红色）</span>、<span style="color: yellow;">远程（黄色）</span>、<span style="color: blue;">炸弹人（蓝色）</span>。</p>
+        <p>近战怪物会向玩家移动，碰到玩家会造成伤害。</p>
+        <p>远程怪物会向玩家移动，但会与玩家保持一定距离，同时会向玩家射击子弹。</p>
+        <p>炸弹人会向玩家移动，靠近玩家会开始爆炸爆炸，爆炸能对玩家和怪物造成大量伤害。</p>
+        <button id="closeButton">关闭</button>
+    </div>
+    
     <div id="gameStartScreen">
         <h1>游戏开始</h1>
         <button id="startButton">开始游戏</button>
@@ -22,10 +36,7 @@
     <script type="module" src="js/Bomber.js"></script>
     <script type="module" src="js/RangedMonster.js"></script>
     <script type="module" src="js/Obstacle.js"></script>
-    <script type="module" src="js/BloodParticle.js"></script>
-    <script type="module" src="js/Item.js"></script>
     <script type="module" src="js/Main.js"></script> <!-- 包含主游戏逻辑的文件 -->
-    <script type="module" src="js/DropLoot.js"></script>
 </body>
 
 </html>
