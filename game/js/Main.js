@@ -33,11 +33,14 @@ import { DropLoot } from "./DropLoot.js";
 import { dropLoots } from "./DropLoot.js";
 
 import { Reward } from "./Reward.js";
+import { rewards } from "./Reward.js";
 
 export const maxObstacles = 15; // 障碍物的最大数量
 export const maxMonsters = 5;
 let isPause = false; // 是否暂停游戏
 let isHelp = false; // 是否打开帮助界面
+let isBlock1 = false;
+let isBlock2 = false;
 const maxSpeedItem = 1;
 const maxShieldItem = 1;
 
@@ -189,7 +192,18 @@ function generateItem() {
                 i--;
                 continue; // 保证道具不生成在画布外
             }
-            speedItems.push(new SpeedItem(x, y, canvas));
+            for (let j = 0; j < obstacles.length; j++) {
+                const dx = x - obstacles[j].x;
+                const dy = y - obstacles[j].y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < SpeedItem.radius + Obstacle.radius) {
+                    isBlock1 = true;
+                    break;
+                }
+            }
+            if (!isBlock1) {
+                speedItems.push(new SpeedItem(x, y, canvas));
+            }
         }
     }
 }
@@ -207,7 +221,18 @@ function generateShieldItem() {
                 j--;
                 continue;
             }
-            shieldItems.push(new ShieldsItem(x, y, canvas));
+            for (let i = 0; i < obstacles.length; i++) {
+                const dx = x - obstacles[i].x;
+                const dy = y - obstacles[i].y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < SpeedItem.radius + Obstacle.radius) {
+                    isBlock2 = true;
+                    break;
+                }
+            }
+            if (!isBlock2) {
+                shieldItems.push(new ShieldsItem(x, y, canvas));
+            }
         }
     }
 }
@@ -492,6 +517,8 @@ function checkBulletMonsterCollision() {
     }
 }
 
+
+
 // 检查怪物子弹和玩家的碰撞
 function checkMonsterBulletPlayerCollision() {
     for (let i = 0; i < monsterBullets.length; i++) {
@@ -536,7 +563,11 @@ function draw() {
 
 // 游戏奖励机制
 function reward() {
-
+    for (let reward of rewards) {
+        if (player.score >= reward.threshold && !player.rewardReceived[reward.type]) {
+            player.receiveReward(reward.type, reward.value, reward.message);
+        }
+    }
 }
 //有bug，待修
 // // 游戏暂停
@@ -563,6 +594,7 @@ function gameLoop() {
         generateObstacles();
         player.move();
         moveBombers();
+        reward();
         moveBullets();
         moveMonsters();
         moveRangedMonsters();
@@ -628,6 +660,7 @@ function gameOver() {
         player.x = canvas.width / 2;
         player.y = canvas.height / 2;
         bullets.length = 0;
+        Bullet.damage = 10;
         monsters.length = 0;
         rangedMonsters.length = 0;
         monsterBullets.length = 0;

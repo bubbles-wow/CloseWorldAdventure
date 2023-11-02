@@ -6,3 +6,5 @@ export class Reward {
         this.message = message;
     }
 }
+
+export const rewards = [new Reward(100, 'current', 20, "玩家的生命上限提高了！"), new Reward(120, 'damage', 100, "子弹的伤害提高了！")];
