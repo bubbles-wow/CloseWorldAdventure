@@ -1,5 +1,5 @@
 import { obstacles } from "./Obstacle.js";
-import { Bullet } from "./Bullet.js";
+import { Bullet, bullets } from "./Bullet.js";
 
 export class Player {
     constructor(canvas) {
@@ -12,12 +12,13 @@ export class Player {
         this.speed = 5; // 玩家移动速度
         this.health = 100; // 玩家生命值
         this.currentHealth = 100; // 玩家的生命值上限
-        this.score = 0; // 玩家得分
+        this.score = 1000; // 玩家得分
         this.vx = 0; // 水平速度
         this.vy = 0; // 垂直速度
+        this.damage = 10; // 玩家的伤害
         this.rewardReceived = {
             damage: false,
-            current: false,
+            current: false
         };
     }
 
@@ -108,7 +109,8 @@ export class Player {
 
     // 实现伤害提升逻辑
     applyDamageBoost(value) {
-        Bullet.damage += value;
+        this.damage += value;
+        //Bullet.damage += value;
     }
 
     // 实现生命上限提升逻辑

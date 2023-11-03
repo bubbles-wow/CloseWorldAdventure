@@ -1,5 +1,5 @@
 export class Bullet {
-    constructor(x, y, vx, vy, speed, canvas) {
+    constructor(x, y, vx, vy, speed, damage, canvas) {
         this.x = x; // 子弹 x 坐标
         this.y = y; // 子弹 y 坐标
         this.vx = vx; // 水平速度
@@ -8,7 +8,7 @@ export class Bullet {
         this.canvas = canvas;
         this.ctx = canvas.getContext("2d");
         this.radius = 5; // 子弹半径
-        this.damage = 10; // 子弹伤害
+        this.damage = damage; // 子弹伤害
         this.knockbackDistance = 20; // 子弹击退距离
     }
 

@@ -172,7 +172,7 @@ export class RangedMonster {
 
     // 处理怪物受到子弹伤害
     damageByBullet(bullet) {
-        this.health -= 10;
+        this.health -= bullet.damage;
         generateBloodSplash(this.x, this.y);
         let directionX = bullet.vx / bullet.speed;
         let directionY = bullet.vy / bullet.speed;

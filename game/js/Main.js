@@ -58,7 +58,7 @@ canvas.addEventListener("click", (event) => {
     const length = Math.sqrt(dx * dx + dy * dy);
     const bulletVX = (dx / length) * bulletSpeed;
     const bulletVY = (dy / length) * bulletSpeed;
-    bullets.push(new Bullet(player.x, player.y, bulletVX, bulletVY, bulletSpeed, canvas));
+    bullets.push(new Bullet(player.x, player.y, bulletVX, bulletVY, bulletSpeed, player.damage, canvas));
 });
 
 document.addEventListener("keydown", handleKeyDown);
@@ -83,6 +83,25 @@ function handleKeyDown(event) {
         case "D":
             player.vx = player.speed; // 右
             break;
+        // 按下空格键暂停游戏
+        case " ": {
+            if (!isHelp) {
+                isPause = !isPause;
+            }
+            else {
+                return;
+            }
+            if (isPause) {
+                const ctx = canvas.getContext("2d");
+                ctx.fillStyle = "rgb(0, 0, 0, 0.5)";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = "#ffffff";
+                ctx.font = "30px Arial";
+                ctx.fillText("游戏已暂停", canvas.width / 2 - 100, canvas.height / 2);
+                ctx.fill();
+            }
+        }
+        break;
     }
 }
 
@@ -555,7 +574,7 @@ function draw() {
     particles.forEach((particle) => particle.draw());
     player.ctx.fillStyle = "black";
     player.ctx.font = "20px Arial";
-    player.ctx.fillText("Health: " + player.health, 10, 30);
+    player.ctx.fillText("Health: " + player.health + "/" + player.currentHealth, 10, 30);
     player.ctx.fillText("Shield: " + player.shield, 10, 60);
     player.ctx.fillText("Score: " + player.score, 10, 90);
     player.draw();
@@ -569,28 +588,10 @@ function reward() {
         }
     }
 }
-//有bug，待修
-// // 游戏暂停
-// document.addEventListener("keydown", function (event) {
-//     if (event.keyCode === 32) {
-//         isPause = !isPause;
-//         if (isPause) {
-//             const ctx = canvas.getContext("2d");
-//             ctx.fillStyle = "rgb(0, 0, 0, 0.5)";
-//             ctx.fillRect(0, 0, canvas.width, canvas.height);
-//             ctx.fillStyle = "#ffffff";
-//             ctx.font = "30px Arial";
-//             ctx.fillText("游戏已暂停", canvas.width / 2 - 100, canvas.height / 2);
-//             ctx.fill();
-//         }
-//     }
-// })
 
 // 游戏循环
 function gameLoop() {
-    // bug，待修
-    //if (!isPause || !isHelp) {
-    if (!isHelp) {
+    if (!isPause && !isHelp) {
         generateObstacles();
         player.move();
         moveBombers();
@@ -608,9 +609,8 @@ function gameLoop() {
         draw();
     }
     if (monsters.length == 0 && rangedMonsters.length == 0 && bombers.length == 0) {
-        setTimeout(function () {
+        setTimeout(() => {
             generateMonsters();
-
         }, 5000);
     }
     if (player.health <= 0) {
@@ -619,12 +619,12 @@ function gameLoop() {
         gameOver();
     }
     if (speedItems.length == 0) {
-        setTimeout(function () {
+        setTimeout(() => {
             generateItem();
         }, 2000);
     }
     if (shieldItems.length == 0) {
-        setTimeout(function () {
+        setTimeout(() => {
             generateShieldItem();
         }, 2000);
     }
@@ -667,6 +667,12 @@ function gameOver() {
         bombers.length = 0;
         bomberExplosions.length = 0;
         particles.length = 0;
+        dropLoots.length = 0;
+        obstacles.length = 0;
+        speedItems.length = 0;
+        shieldItems.length = 0;
+        isPause = false;
+        isHelp = false;
         // 重新开始游戏循环
     });
 }
@@ -677,21 +683,21 @@ let startButton = document.getElementById("startButton");
 let helpButton = document.getElementById("helpButton");
 let helpScreen = document.getElementById("helpScreen");
 let closeButton = document.getElementById("closeButton");
+// 开始游戏
 startButton.addEventListener("click", () => {
     gameStartScreen.style.display = "none";
     canvas.style.display = "block";
     gameLoop();
 });
+// 帮助界面
 helpButton.addEventListener("click", () => {
     helpScreen.style.display = "block";
     helpButton.style.display = "none";
     isHelp = true;
-    // 有bug，待修
-    //isPause = true;
 });
+// 关闭帮助界面
 closeButton.addEventListener("click", () => {
     helpScreen.style.display = "none";
     helpButton.style.display = "block";
     isHelp = false;
-    //isPause = false;
 });
