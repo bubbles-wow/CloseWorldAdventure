@@ -33,11 +33,14 @@ import { DropLoot } from "./DropLoot.js";
 import { dropLoots } from "./DropLoot.js";
 
 import { Reward } from "./Reward.js";
+import { rewards } from "./Reward.js";
 
 export const maxObstacles = 15; // 障碍物的最大数量
 export const maxMonsters = 5;
 let isPause = false; // 是否暂停游戏
 let isHelp = false; // 是否打开帮助界面
+let isBlock1 = false;
+let isBlock2 = false;
 const maxSpeedItem = 1;
 const maxShieldItem = 1;
 
@@ -55,7 +58,7 @@ canvas.addEventListener("click", (event) => {
     const length = Math.sqrt(dx * dx + dy * dy);
     const bulletVX = (dx / length) * bulletSpeed;
     const bulletVY = (dy / length) * bulletSpeed;
-    bullets.push(new Bullet(player.x, player.y, bulletVX, bulletVY, bulletSpeed, canvas));
+    bullets.push(new Bullet(player.x, player.y, bulletVX, bulletVY, bulletSpeed, player.damage, canvas));
 });
 
 document.addEventListener("keydown", handleKeyDown);
@@ -80,6 +83,25 @@ function handleKeyDown(event) {
         case "D":
             player.vx = player.speed; // 右
             break;
+        // 按下空格键暂停游戏
+        case " ": {
+            if (!isHelp) {
+                isPause = !isPause;
+            }
+            else {
+                return;
+            }
+            if (isPause) {
+                const ctx = canvas.getContext("2d");
+                ctx.fillStyle = "rgb(0, 0, 0, 0.5)";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = "#ffffff";
+                ctx.font = "30px Arial";
+                ctx.fillText("游戏已暂停", canvas.width / 2 - 100, canvas.height / 2);
+                ctx.fill();
+            }
+        }
+        break;
     }
 }
 
@@ -189,7 +211,18 @@ function generateItem() {
                 i--;
                 continue; // 保证道具不生成在画布外
             }
-            speedItems.push(new SpeedItem(x, y, canvas));
+            for (let j = 0; j < obstacles.length; j++) {
+                const dx = x - obstacles[j].x;
+                const dy = y - obstacles[j].y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < SpeedItem.radius + Obstacle.radius) {
+                    isBlock1 = true;
+                    break;
+                }
+            }
+            if (!isBlock1) {
+                speedItems.push(new SpeedItem(x, y, canvas));
+            }
         }
     }
 }
@@ -207,7 +240,18 @@ function generateShieldItem() {
                 j--;
                 continue;
             }
-            shieldItems.push(new ShieldsItem(x, y, canvas));
+            for (let i = 0; i < obstacles.length; i++) {
+                const dx = x - obstacles[i].x;
+                const dy = y - obstacles[i].y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < SpeedItem.radius + Obstacle.radius) {
+                    isBlock2 = true;
+                    break;
+                }
+            }
+            if (!isBlock2) {
+                shieldItems.push(new ShieldsItem(x, y, canvas));
+            }
         }
     }
 }
@@ -492,6 +536,8 @@ function checkBulletMonsterCollision() {
     }
 }
 
+
+
 // 检查怪物子弹和玩家的碰撞
 function checkMonsterBulletPlayerCollision() {
     for (let i = 0; i < monsterBullets.length; i++) {
@@ -528,7 +574,7 @@ function draw() {
     particles.forEach((particle) => particle.draw());
     player.ctx.fillStyle = "black";
     player.ctx.font = "20px Arial";
-    player.ctx.fillText("Health: " + player.health, 10, 30);
+    player.ctx.fillText("Health: " + player.health + "/" + player.currentHealth, 10, 30);
     player.ctx.fillText("Shield: " + player.shield, 10, 60);
     player.ctx.fillText("Score: " + player.score, 10, 90);
     player.draw();
@@ -536,33 +582,20 @@ function draw() {
 
 // 游戏奖励机制
 function reward() {
-
+    for (let reward of rewards) {
+        if (player.score >= reward.threshold && !player.rewardReceived[reward.type]) {
+            player.receiveReward(reward.type, reward.value, reward.message);
+        }
+    }
 }
-//有bug，待修
-// // 游戏暂停
-// document.addEventListener("keydown", function (event) {
-//     if (event.keyCode === 32) {
-//         isPause = !isPause;
-//         if (isPause) {
-//             const ctx = canvas.getContext("2d");
-//             ctx.fillStyle = "rgb(0, 0, 0, 0.5)";
-//             ctx.fillRect(0, 0, canvas.width, canvas.height);
-//             ctx.fillStyle = "#ffffff";
-//             ctx.font = "30px Arial";
-//             ctx.fillText("游戏已暂停", canvas.width / 2 - 100, canvas.height / 2);
-//             ctx.fill();
-//         }
-//     }
-// })
 
 // 游戏循环
 function gameLoop() {
-    // bug，待修
-    //if (!isPause || !isHelp) {
-    if (!isHelp) {
+    if (!isPause && !isHelp) {
         generateObstacles();
         player.move();
         moveBombers();
+        reward();
         moveBullets();
         moveMonsters();
         moveRangedMonsters();
@@ -576,9 +609,8 @@ function gameLoop() {
         draw();
     }
     if (monsters.length == 0 && rangedMonsters.length == 0 && bombers.length == 0) {
-        setTimeout(function () {
+        setTimeout(() => {
             generateMonsters();
-
         }, 5000);
     }
     if (player.health <= 0) {
@@ -587,12 +619,12 @@ function gameLoop() {
         gameOver();
     }
     if (speedItems.length == 0) {
-        setTimeout(function () {
+        setTimeout(() => {
             generateItem();
         }, 2000);
     }
     if (shieldItems.length == 0) {
-        setTimeout(function () {
+        setTimeout(() => {
             generateShieldItem();
         }, 2000);
     }
@@ -628,12 +660,19 @@ function gameOver() {
         player.x = canvas.width / 2;
         player.y = canvas.height / 2;
         bullets.length = 0;
+        Bullet.damage = 10;
         monsters.length = 0;
         rangedMonsters.length = 0;
         monsterBullets.length = 0;
         bombers.length = 0;
         bomberExplosions.length = 0;
         particles.length = 0;
+        dropLoots.length = 0;
+        obstacles.length = 0;
+        speedItems.length = 0;
+        shieldItems.length = 0;
+        isPause = false;
+        isHelp = false;
         // 重新开始游戏循环
     });
 }
@@ -644,21 +683,21 @@ let startButton = document.getElementById("startButton");
 let helpButton = document.getElementById("helpButton");
 let helpScreen = document.getElementById("helpScreen");
 let closeButton = document.getElementById("closeButton");
+// 开始游戏
 startButton.addEventListener("click", () => {
     gameStartScreen.style.display = "none";
     canvas.style.display = "block";
     gameLoop();
 });
+// 帮助界面
 helpButton.addEventListener("click", () => {
     helpScreen.style.display = "block";
     helpButton.style.display = "none";
     isHelp = true;
-    // 有bug，待修
-    //isPause = true;
 });
+// 关闭帮助界面
 closeButton.addEventListener("click", () => {
     helpScreen.style.display = "none";
     helpButton.style.display = "block";
     isHelp = false;
-    //isPause = false;
 });
