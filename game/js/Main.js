@@ -49,6 +49,7 @@ window.addEventListener("resize", () => {
     canvas.height = window.innerHeight;
 });
 
+// 玩家发射子弹
 canvas.addEventListener("click", (event) => {
     const mouseX = event.clientX;
     const mouseY = event.clientY;
@@ -59,6 +60,140 @@ canvas.addEventListener("click", (event) => {
     const bulletVX = (dx / length) * bulletSpeed;
     const bulletVY = (dy / length) * bulletSpeed;
     bullets.push(new Bullet(player.x, player.y, bulletVX, bulletVY, bulletSpeed, player.damage, canvas));
+});
+
+// 玩家近战攻击
+canvas.addEventListener("contextmenu", (event) => {
+    event.preventDefault();
+    // 攻击冷却时间
+    if (player.attackCooldown > 0) {
+        return;
+    }
+    else {
+        player.attackCooldown = player.attackCooldownTime;
+    }
+    for (let i = 0; i < monsters.length; i++) {
+        let dx = monsters[i].x - player.x;
+        let dy = monsters[i].y - player.y;
+        let distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance < monsters[i].radius + player.radius + player.closeAttackDistance) {
+            let center = (event.clientX - player.x) / Math.sqrt((event.clientX - player.x) * (event.clientX - player.x) + (event.clientY - player.y) * (event.clientY - player.y));
+            let centerAngle = Math.acos(center) * (180 / Math.PI);
+            let monsterAngle = Math.acos(dx / distance) * (180 / Math.PI);
+            let minAngle = centerAngle - 60;
+            let maxAngle = centerAngle + 60;
+            if (minAngle < 0) {
+                if (monsterAngle >= 360 + minAngle) {
+                    minAngle += 360;
+                }
+                else {
+                    minAngle = 0;
+                }
+            }
+            if (maxAngle > 360) {
+                if (monsterAngle <= maxAngle - 360) {
+                    monsterAngle += 360;
+                }
+                else {
+                    maxAngle = 360;
+                }
+            }
+            if (monsterAngle >= minAngle && monsterAngle <= maxAngle) {
+                generateBloodSplash(monsters[i].x, monsters[i].y);
+                // 打断攻击
+                if (monsters[i].attackCooldown <= 0) {
+                    monsters[i].attackCooldown = monsters[i].attackCooldownTime;
+                }
+                monsters[i].knockback(player.knockbackDistance, dx / distance, dy / distance);
+                monsters[i].health -= player.damage;
+                if (monsters[i].health <= 0) {
+                    monsters.splice(i, 1); // 移除生命值为 0 的怪物
+                    player.score += monsters[i].score; // 增加玩家得分
+                    i--;
+                }
+            }
+        }
+    }
+    for (let i = 0; i < rangedMonsters.length; i++) {
+        let dx = rangedMonsters[i].x - player.x;
+        let dy = rangedMonsters[i].y - player.y;
+        let distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance < rangedMonsters[i].radius + player.radius + player.closeAttackDistance) {
+            let center = (event.clientX - player.x) / Math.sqrt((event.clientX - player.x) * (event.clientX - player.x) + (event.clientY - player.y) * (event.clientY - player.y));
+            let centerAngle = Math.acos(center) * (180 / Math.PI);
+            let monsterAngle = Math.acos(dx / distance) * (180 / Math.PI);
+            let minAngle = centerAngle - 60;
+            let maxAngle = centerAngle + 60;
+            if (minAngle < 0) {
+                if (monsterAngle >= 360 + minAngle) {
+                    minAngle += 360;
+                }
+                else {
+                    minAngle = 0;
+                }
+            }
+            if (maxAngle > 360) {
+                if (monsterAngle <= maxAngle - 360) {
+                    monsterAngle += 360;
+                }
+                else {
+                    maxAngle = 360;
+                }
+            }
+            if (monsterAngle >= minAngle && monsterAngle <= maxAngle) {
+                generateBloodSplash(rangedMonsters[i].x, rangedMonsters[i].y);
+                // 打断攻击
+                if (rangedMonsters[i].attackCooldown <= 0) {
+                    rangedMonsters[i].attackCooldown = rangedMonsters[i].attackCooldownTime;
+                }
+                rangedMonsters[i].knockback(player.knockbackDistance, dx / distance, dy / distance);
+                rangedMonsters[i].health -= player.damage;
+                if (rangedMonsters[i].health <= 0) {
+                    rangedMonsters.splice(i, 1); // 移除生命值为 0 的怪物
+                    player.score += rangedMonsters[i].score; // 增加玩家得分
+                    i--;
+                }
+            }
+        }
+    }
+    for (let i = 0; i < bombers.length; i++) {
+        let dx = bombers[i].x - player.x;
+        let dy = bombers[i].y - player.y;
+        let distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance < bombers[i].radius + player.radius + player.closeAttackDistance) {
+            let center = (event.clientX - player.x) / Math.sqrt((event.clientX - player.x) * (event.clientX - player.x) + (event.clientY - player.y) * (event.clientY - player.y));
+            let centerAngle = Math.acos(center) * (180 / Math.PI);
+            let monsterAngle = Math.acos(dx / distance) * (180 / Math.PI);
+            let minAngle = centerAngle - 60;
+            let maxAngle = centerAngle + 60;
+            if (minAngle < 0) {
+                if (monsterAngle >= 360 + minAngle) {
+                    minAngle += 360;
+                }
+                else {
+                    minAngle = 0;
+                }
+            }
+            if (maxAngle > 360) {
+                if (monsterAngle <= maxAngle - 360) {
+                    monsterAngle += 360;
+                }
+                else {
+                    maxAngle = 360;
+                }
+            }
+            if (monsterAngle >= minAngle && monsterAngle <= maxAngle) {
+                generateBloodSplash(bombers[i].x, bombers[i].y);
+                bombers[i].knockback(player.knockbackDistance, dx / distance, dy / distance);
+                bombers[i].health -= player.damage;
+                if (bombers[i].health <= 0) {
+                    bombers.splice(i, 1); // 移除生命值为 0 的怪物
+                    player.score += bombers[i].score; // 增加玩家得分
+                    i--;
+                }
+            }
+        }
+    }
 });
 
 document.addEventListener("keydown", handleKeyDown);
@@ -101,7 +236,7 @@ function handleKeyDown(event) {
                 ctx.fill();
             }
         }
-        break;
+            break;
     }
 }
 

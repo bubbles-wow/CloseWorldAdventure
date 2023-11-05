@@ -16,6 +16,10 @@ export class Player {
         this.vx = 0; // 水平速度
         this.vy = 0; // 垂直速度
         this.damage = 10; // 玩家的伤害
+        this.closeAttackDistance = 50; // 玩家近战攻击距离
+        this.knockbackDistance = 40; // 玩家近战击退距离
+        this.attackCooldown = 0; // 攻击冷却时间
+        this.attackCooldownTime = 200; // 攻击冷却时间阈值
         this.rewardReceived = {
             damage: false,
             current: false
@@ -66,6 +70,10 @@ export class Player {
         }
 
         this.avoidObstacles();
+
+        if (this.attackCooldown > 0) {
+            this.attackCooldown -= 16;
+        }
     }
 
     // 避开障碍物
