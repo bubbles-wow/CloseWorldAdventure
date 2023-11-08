@@ -109,8 +109,8 @@ canvas.addEventListener("contextmenu", (event) => {
                 monsters[i].knockback(player.knockbackDistance, dx / distance, dy / distance);
                 monsters[i].health -= player.damage;
                 if (monsters[i].health <= 0) {
-                    monsters.splice(i, 1); // 移除生命值为 0 的怪物
                     player.score += monsters[i].score; // 增加玩家得分
+                    monsters.splice(i, 1); // 移除生命值为 0 的怪物
                     i--;
                 }
             }
@@ -151,14 +151,19 @@ canvas.addEventListener("contextmenu", (event) => {
                 rangedMonsters[i].knockback(player.knockbackDistance, dx / distance, dy / distance);
                 rangedMonsters[i].health -= player.damage;
                 if (rangedMonsters[i].health <= 0) {
-                    rangedMonsters.splice(i, 1); // 移除生命值为 0 的怪物
                     player.score += rangedMonsters[i].score; // 增加玩家得分
+                    rangedMonsters.splice(i, 1); // 移除生命值为 0 的怪物
                     i--;
                 }
             }
         }
     }
     for (let i = 0; i < bombers.length; i++) {
+        if (bombers[i].isDead || bombers[i].health <= 0) {
+            bombers.splice(i, 1);
+            i--;
+            continue;
+        }
         let dx = bombers[i].x - player.x;
         let dy = bombers[i].y - player.y;
         let distance = Math.sqrt(dx * dx + dy * dy);
@@ -189,8 +194,8 @@ canvas.addEventListener("contextmenu", (event) => {
                 bombers[i].knockback(player.knockbackDistance, dx / distance, dy / distance);
                 bombers[i].health -= player.damage;
                 if (bombers[i].health <= 0) {
-                    bombers.splice(i, 1); // 移除生命值为 0 的怪物
                     player.score += bombers[i].score; // 增加玩家得分
+                    bombers.splice(i, 1); // 移除生命值为 0 的怪物
                     i--;
                 }
             }
