@@ -3,6 +3,8 @@ import { canvas } from "./Player.js";
 
 import { Obstacle } from "./Obstacle.js";
 import { obstacles } from "./Obstacle.js";
+import { littlePlants } from "./Obstacle.js";
+import { LittlePlant } from "./Obstacle.js";
 
 import { Bullet } from "./Bullet.js";
 import { MonsterBullet } from "./Bullet.js";
@@ -35,7 +37,7 @@ import { dropLoots } from "./DropLoot.js";
 import { Reward } from "./Reward.js";
 import { rewards } from "./Reward.js";
 
-export const maxObstacles = 15; // 障碍物的最大数量
+export const maxObstacles = 25; // 障碍物的最大数量
 export const maxMonsters = 5;
 let isPause = false; // 是否暂停游戏
 let isHelp = false; // 是否打开帮助界面
@@ -437,9 +439,64 @@ function collectItem() {
 function generateObstacles() {
     if (obstacles.length == 0) {
         for (let i = 0; i < maxObstacles; i++) {
-            const x = Math.random() * canvas.width;
-            const y = Math.random() * canvas.height;
-            const radius = Math.random() * 30 + 10; // 障碍物半径
+            let x = Math.random() * canvas.width;
+            let y = Math.random() * canvas.height;
+            let type = Math.random() * 100;
+            if (type < 30) {
+                type = 1;
+            }
+            else if (type < 60) {
+                type = 2;
+            }
+            else if (type < 80) {
+                type = 3;
+            }
+            else {
+                type = 4;
+            }
+
+            let radius;
+            if (type == 1) {
+                radius = 12;
+            }
+            else if (type == 2) {
+                radius = 16;
+            }
+            else if (type == 3) {
+                radius = 32;
+            }
+            else {
+                radius = 24;
+            }
+
+            if (radius == 12) {
+                let random = Math.random() * 100;
+                if (random < 50) {
+                    type = 1;
+                }
+                else {
+                    type = 2;
+                }
+            }
+            else if (radius == 24) {
+                let random = Math.random() * 100;
+                if (random < 50) {
+                    type = 0;
+                }
+                else {
+                    type = 1;
+                }
+            }
+            else if (radius == 32 || radius == 16) {
+                let random = Math.random() * 100;
+                if (random < 50) {
+                    type = 3;
+                }
+                else {
+                    type = 4;
+                }
+            }
+
 
             let isOverlapping = false;
             for (const obstacle of obstacles) {
@@ -455,9 +512,42 @@ function generateObstacles() {
                 continue;
             }
 
-            obstacles.push(new Obstacle(x, y, radius, canvas));
+            obstacles.push(new Obstacle(x, y, radius, type, canvas));
+        }
+        // 按照障碍物的y坐标，避免遮挡
+        for (let i = 0; i < obstacles.length - 1; i++) {
+            for (let j = 0; j < obstacles.length - 1 - i; j++) {
+                if (obstacles[j].y > obstacles[j + 1].y) {
+                    let temp = obstacles[j];
+                    obstacles[j] = obstacles[j + 1];
+                    obstacles[j + 1] = temp;
+                }
+            }
         }
     }
+}
+
+function generateGrass() {
+    if (littlePlants.length == 0) {
+        let count;
+        if (canvas.width < canvas.height) {
+            count = canvas.height / 20;
+        }
+        else {
+            count = canvas.width / 20;
+        }
+        for (let i = 0; i < count; i++) {
+            let x = Math.random() * canvas.width;
+            let y = Math.random() * canvas.height;
+            if (x < 10 || x > canvas.width - 10 || y < 10 || y > canvas.height - 10) {
+                i--;
+                continue;
+            }
+            let type = Math.floor(Math.random() * 7);
+            littlePlants.push(new LittlePlant(x, y, type, canvas));
+        }
+    }
+
 }
 
 // 生成怪物
@@ -691,15 +781,17 @@ function checkMonsterBulletPlayerCollision() {
 }
 
 // 绘制画面
-function draw() {
+function draw() {    
+    player.ctx.imageSmoothingEnabled = false;
     player.ctx.clearRect(0, 0, player.canvas.width, player.canvas.height);
+    littlePlants.forEach((littlePlant) => littlePlant.draw());
+    player.draw();
     if (player.health <= 0) {
         return;
     }
     shieldItems.forEach((shieldItem) => shieldItem.draw());
     speedItems.forEach((speedItem) => speedItem.draw());
     dropLoots.forEach((dropLoot) => dropLoot.draw());
-    obstacles.forEach((obstacle) => obstacle.draw());
     bullets.forEach((bullet) => bullet.draw());
     monsters.forEach((monster) => monster.draw());
     rangedMonsters.forEach((rangedMonster) => rangedMonster.draw());
@@ -707,12 +799,12 @@ function draw() {
     bombers.forEach((bomber) => bomber.draw());
     bomberExplosions.forEach((bomberExplosion) => bomberExplosion.draw());
     particles.forEach((particle) => particle.draw());
+    obstacles.forEach((obstacle) => obstacle.draw());
     player.ctx.fillStyle = "black";
     player.ctx.font = "20px Arial";
     player.ctx.fillText("Health: " + player.health + "/" + player.currentHealth, 10, 30);
     player.ctx.fillText("Shield: " + player.shield, 10, 60);
     player.ctx.fillText("Score: " + player.score, 10, 90);
-    player.draw();
 }
 
 // 游戏奖励机制
@@ -728,6 +820,7 @@ function reward() {
 function gameLoop() {
     if (!isPause && !isHelp) {
         generateObstacles();
+        generateGrass();
         player.move();
         moveBombers();
         reward();
@@ -771,7 +864,6 @@ function gameOver() {
     cancelAnimationFrame(animationFrameId);
     let canvas = document.getElementById("Canvas");
     canvas.style.display = "none";
-    let gameOverScreen = document.getElementById("gameOverScreen");
     gameOverScreen.style.display = "block";
     gameOverScreen.style.width = canvas.width + "px";
     gameOverScreen.style.height = canvas.height + "px";
@@ -814,10 +906,13 @@ function gameOver() {
 
 let animationFrameId;
 let gameStartScreen = document.getElementById("gameStartScreen");
+let gameOverScreen = document.getElementById("gameOverScreen");
 let startButton = document.getElementById("startButton");
 let helpButton = document.getElementById("helpButton");
 let helpScreen = document.getElementById("helpScreen");
 let closeButton = document.getElementById("closeButton");
+gameStartScreen.style.paddingTop = window.innerHeight / 1.5 + "px";
+gameOverScreen.style.paddingTop = window.innerHeight / 1.5 + "px";
 // 开始游戏
 startButton.addEventListener("click", () => {
     gameStartScreen.style.display = "none";
