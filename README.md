@@ -1,6 +1,6 @@
 # 使用教程
 ### 通过GitHub Pages：
-  [点击这里即可开始](https://bubbles-wow.github.io/CloseWorldAdventure/)
+  [点击这里即可开始](https://bubbles-wow.github.io/CloseWorldAdventure/game/index.html)
 ### 使用VSCode的插件实现运行
 1. 克隆仓库到本地
   ```shell
