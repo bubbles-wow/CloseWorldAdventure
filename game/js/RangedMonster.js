@@ -189,6 +189,9 @@ export class RangedMonster {
         this.ctx.fillStyle = "gray";
         this.ctx.fillRect(this.x - 15, this.y - this.radius - 10, 30, 5);
 
+        this.ctx.fillStyle = "black"
+        this.ctx.strokeRect(this.x - 15, this.y - this.radius - 10, 30, 5);
+        
         this.ctx.fillStyle = "green";
         let healthBarWidth = (this.health / 100) * 30;
         this.ctx.fillRect(this.x - 15, this.y - this.radius - 10, healthBarWidth, 5);
