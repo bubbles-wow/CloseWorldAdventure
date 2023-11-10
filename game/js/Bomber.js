@@ -114,7 +114,7 @@ export class Bomber {
         let directionX = dx / distanceToPlayer;
         let directionY = dy / distanceToPlayer;
 
-        if (distanceToPlayer < this.radius + player.radius + this.pursuitPlayerDistance) {
+        if (distanceToPlayer < this.radius + player.radius + this.pursuitPlayerDistance && player.health >= 0) {
             // 炸弹人和玩家之间没有碰撞，可以直接追击
             if (distanceToPlayer > this.radius + player.radius + 5) {
                 this.x += directionX * this.speed;
@@ -208,7 +208,7 @@ export class Bomber {
         const distanceToPlayer = this.getDistanceToPlayer();
 
         // 如果距离玩家很近，炸弹人会追踪玩家
-        if (distanceToPlayer < this.pursuitPlayerDistance) {
+        if (distanceToPlayer < this.pursuitPlayerDistance && player.health >= 0) {
             this.pursuitPlayer();
         }
         else {

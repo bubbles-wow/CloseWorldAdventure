@@ -17,24 +17,25 @@ export class Obstacle {
         let imagePositionX;
         let imagePositionY;
         let offset;
-        if (this.radius == 12) {
-            scale = 1;
+        if (this.radius == 18) {
+            scale = 1.5;
             if (this.type == 1) {
                 imageWidth = 45;
                 imageHeight = 64;
                 imagePositionX = 0;
                 imagePositionY = 0;
+                offset = this.radius * 3 / 2;
             }
             else if (this.type == 2) {
                 imageWidth = 23;
                 imageHeight = 42;
                 imagePositionX = 46;
                 imagePositionY = 0;
+                offset = this.radius / 2;
             }
-            offset = this.radius * 3 / 2;
         }
-        else if (this.radius == 24) {
-            scale = 2;
+        else if (this.radius == 36) {
+            scale = 3;
             imageWidth = 45;
             imageHeight = 64;
             offset = this.radius * 3 / 2;
@@ -49,9 +50,9 @@ export class Obstacle {
 
         }
         else {
-            scale = 1;
-            if (this.radius == 32) {
-                scale = 2;
+            scale = 1.5;
+            if (this.radius == 48) {
+                scale = 3;
             }
             else {
                 this.type = 3;

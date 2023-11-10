@@ -26,7 +26,7 @@ export class RangedMonster {
 
     // 处理怪物攻击玩家
     shootPlayer(directionX, directionY) {
-        if (this.attackCooldown > 0) {
+        if (this.attackCooldown > 0 || player.health <= 0) {
             return;
         }
         else {
@@ -144,7 +144,7 @@ export class RangedMonster {
         let distanceToPlayer = this.getDistanceToPlayer(player);
 
         // 如果距离玩家很近，怪物会追踪玩家
-        if (distanceToPlayer < this.pursuitPlayerDistance) {
+        if (distanceToPlayer < this.pursuitPlayerDistance && player.health >= 0) {
             this.pursuitPlayer(player, obstacles);
         }
         else {

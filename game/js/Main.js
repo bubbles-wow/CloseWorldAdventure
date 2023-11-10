@@ -68,12 +68,31 @@ canvas.addEventListener("click", (event) => {
 canvas.addEventListener("contextmenu", (event) => {
     event.preventDefault();
     // 攻击冷却时间
-    if (player.attackCooldown > 0) {
+    if (player.attackCooldown != 0 || player.health <= 0) {
         return;
     }
     else {
-        player.attackCooldown = player.attackCooldownTime;
+        player.isCloseAttack = true;
+        player.attackCooldown++;
     }
+
+    if (Math.abs(event.clientY - player.y) - Math.abs(event.clientX - player.x) > 0) {
+        if (event.clientY - player.y < 0){
+            player.direction = "w";
+        }
+        else {
+            player.direction = "s";
+        }
+    }
+    else {
+        if (event.clientX - player.x < 0) {
+            player.direction = "a";
+        }
+        else {
+            player.direction = "d";
+        }
+    }
+
     for (let i = 0; i < monsters.length; i++) {
         let dx = monsters[i].x - player.x;
         let dy = monsters[i].y - player.y;
@@ -82,8 +101,8 @@ canvas.addEventListener("contextmenu", (event) => {
             let center = (event.clientX - player.x) / Math.sqrt((event.clientX - player.x) * (event.clientX - player.x) + (event.clientY - player.y) * (event.clientY - player.y));
             let centerAngle = Math.acos(center) * (180 / Math.PI);
             let monsterAngle = Math.acos(dx / distance) * (180 / Math.PI);
-            let minAngle = centerAngle - 60;
-            let maxAngle = centerAngle + 60;
+            let minAngle = centerAngle - 80;
+            let maxAngle = centerAngle + 80;
             if (minAngle < 0) {
                 if (monsterAngle >= 360 + minAngle) {
                     minAngle += 360;
@@ -124,8 +143,8 @@ canvas.addEventListener("contextmenu", (event) => {
             let center = (event.clientX - player.x) / Math.sqrt((event.clientX - player.x) * (event.clientX - player.x) + (event.clientY - player.y) * (event.clientY - player.y));
             let centerAngle = Math.acos(center) * (180 / Math.PI);
             let monsterAngle = Math.acos(dx / distance) * (180 / Math.PI);
-            let minAngle = centerAngle - 60;
-            let maxAngle = centerAngle + 60;
+            let minAngle = centerAngle - 80;
+            let maxAngle = centerAngle + 80;
             if (minAngle < 0) {
                 if (monsterAngle >= 360 + minAngle) {
                     minAngle += 360;
@@ -171,8 +190,8 @@ canvas.addEventListener("contextmenu", (event) => {
             let center = (event.clientX - player.x) / Math.sqrt((event.clientX - player.x) * (event.clientX - player.x) + (event.clientY - player.y) * (event.clientY - player.y));
             let centerAngle = Math.acos(center) * (180 / Math.PI);
             let monsterAngle = Math.acos(dx / distance) * (180 / Math.PI);
-            let minAngle = centerAngle - 60;
-            let maxAngle = centerAngle + 60;
+            let minAngle = centerAngle - 80;
+            let maxAngle = centerAngle + 80;
             if (minAngle < 0) {
                 if (monsterAngle >= 360 + minAngle) {
                     minAngle += 360;
@@ -208,22 +227,30 @@ document.addEventListener("keyup", handleKeyUp);
 
 // 处理按键按下事件
 function handleKeyDown(event) {
+    if (player.health <= 0) {
+        return;
+    }
+    let direction = player.direction;
     switch (event.key) {
         case "w":
         case "W":
             player.vy = -player.speed; // 上
+            player.direction = "w";
             break;
         case "s":
         case "S":
             player.vy = player.speed; // 下
+            player.direction = "s";
             break;
         case "a":
         case "A":
             player.vx = -player.speed; // 左
+            player.direction = "a"
             break;
         case "d":
         case "D":
             player.vx = player.speed; // 右
+            player.direction = "d"
             break;
         // 按下空格键暂停游戏
         case " ": {
@@ -245,6 +272,9 @@ function handleKeyDown(event) {
         }
             break;
     }
+    if (player.isCloseAttack) {
+        player.direction = direction;
+    }
 }
 
 // 处理按键松开事件
@@ -255,12 +285,24 @@ function handleKeyUp(event) {
         case "s":
         case "S":
             player.vy = 0; // 停止垂直移动
+            if (player.vx > 0) {
+                player.direction = "d";
+            }
+            else if (player.vx < 0) {
+                player.direction = "a";
+            }
             break;
         case "a":
         case "A":
         case "d":
         case "D":
             player.vx = 0; // 停止水平移动
+            if (player.vy > 0) {
+                player.direction = "s";
+            }
+            else if (player.vy < 0) {
+                player.direction = "w";
+            }
             break;
     }
 }
@@ -453,28 +495,22 @@ function generateObstacles() {
             else if (type < 60) {
                 type = 2;
             }
-            else if (type < 80) {
-                type = 3;
-            }
             else {
-                type = 4;
+                type = 3;
             }
 
             let radius;
             if (type == 1) {
-                radius = 12;
+                radius = 18;
             }
             else if (type == 2) {
-                radius = 16;
-            }
-            else if (type == 3) {
-                radius = 32;
-            }
-            else {
                 radius = 24;
             }
+            else {
+                radius = 36;
+            }
 
-            if (radius == 12) {
+            if (radius == 18) {
                 let random = Math.random() * 100;
                 if (random < 50) {
                     type = 1;
@@ -483,7 +519,7 @@ function generateObstacles() {
                     type = 2;
                 }
             }
-            else if (radius == 24) {
+            else if (radius == 36) {
                 let random = Math.random() * 100;
                 if (random < 50) {
                     type = 0;
@@ -492,7 +528,7 @@ function generateObstacles() {
                     type = 1;
                 }
             }
-            else if (radius == 32 || radius == 16) {
+            else {
                 let random = Math.random() * 100;
                 if (random < 50) {
                     type = 3;
@@ -786,14 +822,11 @@ function checkMonsterBulletPlayerCollision() {
 }
 
 // 绘制画面
-function draw() {    
+function draw() {
     player.ctx.imageSmoothingEnabled = false;
     player.ctx.clearRect(0, 0, player.canvas.width, player.canvas.height);
     littlePlants.forEach((littlePlant) => littlePlant.draw());
     player.draw();
-    if (player.health <= 0) {
-        return;
-    }
     shieldItems.forEach((shieldItem) => shieldItem.draw());
     speedItems.forEach((speedItem) => speedItem.draw());
     dropLoots.forEach((dropLoot) => dropLoot.draw());
@@ -802,9 +835,9 @@ function draw() {
     rangedMonsters.forEach((rangedMonster) => rangedMonster.draw());
     monsterBullets.forEach((monsterBullet) => monsterBullet.draw());
     bombers.forEach((bomber) => bomber.draw());
+    obstacles.forEach((obstacle) => obstacle.draw());
     bomberExplosions.forEach((bomberExplosion) => bomberExplosion.draw());
     particles.forEach((particle) => particle.draw());
-    obstacles.forEach((obstacle) => obstacle.draw());
     player.ctx.fillStyle = "black";
     player.ctx.font = "20px Arial";
     player.ctx.fillText("Health: " + player.health + "/" + player.currentHealth, 10, 30);
@@ -826,7 +859,9 @@ function gameLoop() {
     if (!isPause && !isHelp) {
         generateObstacles();
         generateGrass();
-        player.move();
+        if (player.health > 0) {
+            player.move();
+        }
         moveBombers();
         reward();
         moveBullets();
@@ -846,7 +881,7 @@ function gameLoop() {
             generateMonsters();
         }, 5000);
     }
-    if (player.health <= 0) {
+    if (player.isDead == true) {
         //cancelAnimationFrame(animationFrameId);
         player.ctx.clearRect(0, 0, player.canvas.width, player.canvas.height);
         gameOver();
@@ -885,6 +920,9 @@ function gameOver() {
         gameOverScreen.style.display = "none";
         canvas.style.display = "block";
         // 重置游戏状态
+        player.isDead = false;
+        player.animationFrame = 0;
+        player.animationFrameTime = 59;
         player.health = 100;
         player.score = 0;
         player.speed = 5;

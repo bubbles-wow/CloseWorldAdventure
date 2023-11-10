@@ -9,17 +9,22 @@ export class Player {
         this.y = canvas.height / 2; // 玩家初始 y 坐标
         this.radius = 10; // 玩家半径
         this.shield = 0; // 玩家目前所持护盾
-        this.speed = 5; // 玩家移动速度
+        this.speed = 2; // 玩家移动速度
         this.health = 100; // 玩家生命值
         this.currentHealth = 100; // 玩家的生命值上限
         this.score =0; // 玩家得分
         this.vx = 0; // 水平速度
         this.vy = 0; // 垂直速度
+        this.isDead = false; // 玩家是否死亡
         this.damage = 10; // 玩家的伤害
         this.closeAttackDistance = 50; // 玩家近战攻击距离
         this.knockbackDistance = 40; // 玩家近战击退距离
         this.attackCooldown = 0; // 攻击冷却时间
-        this.attackCooldownTime = 200; // 攻击冷却时间阈值
+        this.attackCooldownTime = 59; // 攻击冷却时间阈值
+        this.animationFrame = 0; // 玩家动画帧
+        this.animationFrameTime = 59; // 玩家动画帧阈值
+        this.isCloseAttack = false; // 玩家是否近战攻击
+        this.direction = "s"; // 玩家朝向
         this.rewardReceived = {
             damage: false,
             current: false
@@ -72,7 +77,11 @@ export class Player {
         this.avoidObstacles();
 
         if (this.attackCooldown > 0) {
-            this.attackCooldown -= 16;
+            this.attackCooldown++;
+        }
+        if (this.attackCooldown > this.attackCooldownTime) {
+            this.isCloseAttack = false;
+            this.attackCooldown = 0;
         }
     }
 
@@ -96,10 +105,90 @@ export class Player {
 
     // 绘制玩家
     draw() {
-        this.ctx.beginPath();
-        this.ctx.fillStyle = "#f0149c";
-        this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        this.ctx.fill();
+        let imageDirectionX = 48 * Math.floor(this.animationFrame / 10);
+        let imageDirectionY = 0;
+        let isWalking = false;
+        if (this.vx != 0 || this.vy != 0) {
+            isWalking = true;
+        }
+        if (isWalking) {
+            if (this.direction === "s") {
+                imageDirectionY = 48 * 4;
+            }
+            else if (this.direction === "w") {
+                imageDirectionY = 48 * 6;
+            }
+            else if (this.direction === "a") {
+                imageDirectionY = 48 * 7;
+            }
+            else if (this.direction === "d") {
+                imageDirectionY = 48 * 5;
+            }
+        }
+        else {
+            if (this.direction === "s") {
+                imageDirectionY = 48 * 0;
+            }
+            else if (this.direction === "w") {
+                imageDirectionY = 48 * 2;
+            }
+            else if (this.direction === "a") {
+                imageDirectionY = 48 * 3;
+            }
+            else if (this.direction === "d") {
+                imageDirectionY = 48 * 1;
+            }
+        }
+        if (this.health <= 0) {
+            if (this.animationFrameTime === 59 && this.animationFrame != 0) {
+                this.animationFrame = 0;
+                this.animationFrameTime = 180;
+            }
+            imageDirectionY = 48 * 12;
+            if (this.animationFrame < 30) {
+                imageDirectionX = 48 * 0;
+            }
+            else if (this.animationFrame < 60) {
+                imageDirectionX = 48 * 1;
+            }
+            else if (this.animationFrame < 180) {
+                imageDirectionX = 48 * 2;
+            }
+            if (this.animationFrame === 180) {
+                this.isDead = true;
+            }
+            this.ctx.drawImage(playerImage, imageDirectionX, imageDirectionY, 48, 48, this.x - this.radius - 14 * 1.5, this.y - this.radius - 22 * 1.5, 72, 72);
+            this.animationFrame++;
+            return;
+        }
+        if (this.isCloseAttack) {
+            if (this.direction === "s") {
+                imageDirectionY = 48 * 8;
+            }
+            else if (this.direction === "w") {
+                imageDirectionY = 48 * 10;
+            }
+            else if (this.direction === "a") {
+                imageDirectionY = 48 * 11;
+            }
+            else if (this.direction === "d") {
+                imageDirectionY = 48 * 9;
+            }
+            imageDirectionX = 48 * Math.floor(this.attackCooldown / 15);
+        }
+        if (this.animationFrame < this.animationFrameTime) {
+            this.animationFrame++;
+        }
+        else {
+            this.animationFrame = 0;
+        }
+
+        this.ctx.drawImage(playerImage, imageDirectionX, imageDirectionY, 48, 48, this.x - this.radius - 14 * 1.5, this.y - this.radius - 22 * 1.5, 72, 72);
+
+        // this.ctx.beginPath();
+        // this.ctx.fillStyle = "#f0149c";
+        // this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        // this.ctx.fill();
     }
 
     // 是否接受奖励
@@ -131,3 +220,5 @@ export const canvas = document.getElementById("Canvas");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 export const player = new Player(canvas);
+let playerImage = new Image();
+playerImage.src = "./res/player.png";
