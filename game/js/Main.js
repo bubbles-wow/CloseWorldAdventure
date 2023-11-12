@@ -37,7 +37,14 @@ import { dropLoots } from "./DropLoot.js";
 import { Reward } from "./Reward.js";
 import { rewards } from "./Reward.js";
 
-export const maxObstacles = 25; // 障碍物的最大数量
+let max;
+if (window.innerWidth > window.innerHeight) {
+    max = window.innerWidth / 30;
+}
+else {
+    max = window.innerHeight / 30;
+}
+export const maxObstacles = max; // 障碍物的最大数量
 export const maxMonsters = 5;
 let isPause = false; // 是否暂停游戏
 let isHelp = false; // 是否打开帮助界面
@@ -51,33 +58,70 @@ window.addEventListener("resize", () => {
     canvas.height = window.innerHeight;
 });
 
-// 玩家发射子弹
-canvas.addEventListener("click", (event) => {
-    const mouseX = event.clientX;
-    const mouseY = event.clientY;
-    const dx = mouseX - player.x;
-    const dy = mouseY - player.y;
-    const bulletSpeed = 15;
-    const length = Math.sqrt(dx * dx + dy * dy);
-    const bulletVX = (dx / length) * bulletSpeed;
-    const bulletVY = (dy / length) * bulletSpeed;
-    bullets.push(new Bullet(player.x, player.y, bulletVX, bulletVY, bulletSpeed, player.damage, canvas));
+// 玩家准备蓄力射箭
+canvas.addEventListener("mousedown", (event) => {
+    if (player.attackCooldown != 0 || player.isCloseAttack || player.health <= 0 || event.button != 0) {
+        return;
+    }
+    else {
+        // 挥刀与射箭不共存
+        player.isCloseAttack = false;
+        player.isShootArrow = true;
+        player.attackCooldown++;
+        // 蓄力射箭减速
+        player.speed = 0.5;
+    }
+    if (event.clientX - player.x < 0) {
+        player.direction = "a";
+    }
+    else {
+        player.direction = "d";
+    }
+});
+
+// 玩家蓄力状态下方向跟随鼠标
+canvas.addEventListener("mousemove", (event) => {
+    if (!player.isShootArrow) {
+        return;
+    }
+    if (event.clientX - player.x < 0) {
+        player.direction = "a";
+    }
+    else {
+        player.direction = "d";
+    }
+});
+
+// 松开按键时射箭
+canvas.addEventListener("mouseup", (event) => {
+    if (!player.isShootArrow || player.health <= 0 || event.button != 0 || player.isCloseAttack) {
+        return;
+    }
+    player.shootArrow(event.clientX, event.clientY);
+    player.isShootArrow = false;
+    player.speed = 2;
+    // 蓄满力后下次蓄力无需等待
+    if (player.attackCooldown >= 60) {
+        player.attackCooldown = 0;
+    }
 });
 
 // 玩家近战攻击
 canvas.addEventListener("contextmenu", (event) => {
     event.preventDefault();
     // 攻击冷却时间
-    if (player.attackCooldown != 0 || player.health <= 0) {
+    if (player.attackCooldown != 0 || player.health <= 0 || player.isShootArrow) {
         return;
     }
+    // 两种攻击方式不共存
     else {
         player.isCloseAttack = true;
+        player.isShootArrow = false;
         player.attackCooldown++;
     }
-
+    //确保玩家的方向与鼠标点击的大致方向相同，每个方向为90度
     if (Math.abs(event.clientY - player.y) - Math.abs(event.clientX - player.x) > 0) {
-        if (event.clientY - player.y < 0){
+        if (event.clientY - player.y < 0) {
             player.direction = "w";
         }
         else {
@@ -97,6 +141,7 @@ canvas.addEventListener("contextmenu", (event) => {
         let dx = monsters[i].x - player.x;
         let dy = monsters[i].y - player.y;
         let distance = Math.sqrt(dx * dx + dy * dy);
+        // 以鼠标点击方向为中心的160度扇形为近战攻击判定范围
         if (distance < monsters[i].radius + player.radius + player.closeAttackDistance) {
             let center = (event.clientX - player.x) / Math.sqrt((event.clientX - player.x) * (event.clientX - player.x) + (event.clientY - player.y) * (event.clientY - player.y));
             let centerAngle = Math.acos(center) * (180 / Math.PI);
@@ -231,25 +276,59 @@ function handleKeyDown(event) {
         return;
     }
     let direction = player.direction;
+    let speed = player.speed;
+    if (player.isShootArrow) {
+        speed = 0.5;
+    }
     switch (event.key) {
         case "w":
         case "W":
-            player.vy = -player.speed; // 上
+            player.vy = -speed; // 上
+            // 主要是处理走斜线的时候两个方向的速度有加成，但会感觉手感不好，卡顿
+            if (Math.abs(player.vx) == speed) {
+                player.vx /= Math.sqrt(2);
+                player.vy /= Math.sqrt(2);
+            }
+            // 尝试解决蓄力时减速时间不匹配的问题，好像没有用
+            else if (Math.abs(player.vx) != 0) {
+                player.vx = player.vx / Math.abs(player.vx) * speed;
+            }
             player.direction = "w";
             break;
         case "s":
         case "S":
-            player.vy = player.speed; // 下
+            player.vy = speed; // 下
+            if (Math.abs(player.vx) == speed) {
+                player.vx /= Math.sqrt(2);
+                player.vy /= Math.sqrt(2);
+            }
+            else if (Math.abs(player.vx) != 0) {
+                player.vx = player.vx / Math.abs(player.vx) * speed;
+            }
             player.direction = "s";
             break;
         case "a":
         case "A":
-            player.vx = -player.speed; // 左
+            player.vx = -speed; // 左
+            if (Math.abs(player.vy) == speed) {
+                player.vx /= Math.sqrt(2);
+                player.vy /= Math.sqrt(2);
+            }
+            else if (Math.abs(player.vy) != 0) {
+                player.vy = player.vy / Math.abs(player.vy) * speed;
+            }
             player.direction = "a"
             break;
         case "d":
         case "D":
-            player.vx = player.speed; // 右
+            player.vx = speed; // 右
+            if (Math.abs(player.vy) == speed) {
+                player.vx /= Math.sqrt(2);
+                player.vy /= Math.sqrt(2);
+            }
+            else if (Math.abs(player.vy) != 0) {
+                player.vy = player.vy / Math.abs(player.vy) * speed;
+            }
             player.direction = "d"
             break;
         // 按下空格键暂停游戏
@@ -272,7 +351,7 @@ function handleKeyDown(event) {
         }
             break;
     }
-    if (player.isCloseAttack) {
+    if (player.isCloseAttack || player.isShootArrow) {
         player.direction = direction;
     }
 }
@@ -492,7 +571,7 @@ function generateObstacles() {
             if (type < 30) {
                 type = 1;
             }
-            else if (type < 60) {
+            else if (type < 85) {
                 type = 2;
             }
             else {
@@ -923,9 +1002,12 @@ function gameOver() {
         player.isDead = false;
         player.animationFrame = 0;
         player.animationFrameTime = 59;
+        player.attackCooldown = 0;
+        player.isCloseAttack = false;
+        player.isShootArrow = false;
         player.health = 100;
         player.score = 0;
-        player.speed = 5;
+        player.speed = 2;
         player.shield = 0;
         player.x = canvas.width / 2;
         player.y = canvas.height / 2;

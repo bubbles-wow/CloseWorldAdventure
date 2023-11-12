@@ -17,11 +17,14 @@ export class RangedMonster {
         this.ctx = canvas.getContext("2d");
         this.score = 10; // 击杀怪物分数
         this.radius = 15; // 怪物半径
-        this.speed = 2; // 怪物移动速度
+        this.speed = 1.5; // 怪物移动速度
         this.health = 100; // 怪物生命值
         this.attackCooldown = 0; // 攻击冷却时间
         this.attackCooldownTime = 2000; // 攻击冷却时间阈值
         this.pursuitPlayerDistance = distance; // 怪物追踪玩家的距离阈值
+        this.isWander = false; // 怪物是否游荡
+        this.wanderCooldown = Math.random() * 100; // 游荡冷却时间
+        this.wanderCooldownTime = 300; // 游荡冷却时间阈值
     }
 
     // 处理怪物攻击玩家
@@ -79,37 +82,47 @@ export class RangedMonster {
 
     // 处理怪物的游荡
     wander() {
-        // 游荡时速度慢一点
-        const speed = 1.5;
-        // 怪物游荡时随机改变方向
-        if (Math.random() < 0.05) { // 根据需要调整游荡频率
-            this.vx = (Math.random() - 0.5) * speed;
-            this.vy = (Math.random() - 0.5) * speed;
-        }
-
-        // 限制怪物的游荡范围
-        let minX = this.x - 30; // 左边界的 x 坐标
-        let minY = this.y - 30; // 上边界的 y 坐标
-        let maxX = this.x + 30; // 右边界的 x 坐标
-        let maxY = this.y + 30; // 下边界的 y 坐标
-
-        // 检查怪物是否越界，如果是，则反向移动
-        if (this.x < minX || this.x > maxX) {
-            this.vx *= -1;
-        }
-        if (this.y < minY || this.y > maxY) {
-            this.vy *= -1;
-        }
-
-        if (this.x + this.vx < this.radius || this.x + this.vx > this.canvas.width - this.radius) {
+        this.wanderCooldown++;
+        // 现在怪物会随机往某个方向移动一段时间后停止，而不是一直在动
+        if (this.wanderCooldown == 180) {
+            this.isWander = false;
             this.vx = 0;
-        }
-        if (this.y + this.vy < this.radius || this.y + this.vy > this.canvas.height - this.radius) {
             this.vy = 0;
         }
-        // 移动怪物
-        this.x += this.vx;
-        this.y += this.vy;
+        if (this.wanderCooldown >= this.wanderCooldownTime) {
+            this.wanderCooldown = 0;
+        }
+        if (this.wanderCooldown != 0 && this.isWander == false || this.health <= 0) {
+            return;
+        }
+        else {
+            this.isWander = true;
+        }
+
+        if (this.vx != 0 || this.vy != 0) {
+            this.x += this.vx;
+            this.y += this.vy;
+            if (this.x + this.vx < this.radius || this.x + this.vx > this.canvas.width - this.radius) {
+                this.vx = 0;
+            }
+            if (this.y + this.vy < this.radius || this.y + this.vy > this.canvas.height - this.radius) {
+                this.vy = 0;
+            }
+            return;
+        }
+        else {
+            let random = Math.random() * 100;
+            if (random < 50) {
+                this.isWander = false;
+                return;
+            }
+        }
+        
+        // 游荡时速度慢一点
+        const speed = 1;
+
+        this.vx = (Math.random() - 0.5) * speed;
+        this.vy = (Math.random() - 0.5) * speed;
     }
 
     // 避开障碍物

@@ -24,6 +24,7 @@ export class Player {
         this.animationFrame = 0; // 玩家动画帧
         this.animationFrameTime = 59; // 玩家动画帧阈值
         this.isCloseAttack = false; // 玩家是否近战攻击
+        this.isShootArrow = false; // 玩家是否射箭
         this.direction = "s"; // 玩家朝向
         this.rewardReceived = {
             damage: false,
@@ -76,12 +77,21 @@ export class Player {
 
         this.avoidObstacles();
 
+        // 攻击冷却时间计算
         if (this.attackCooldown > 0) {
             this.attackCooldown++;
         }
+        else if (this.attackCooldown == 0) {
+            // 确保蓄力时不会被中断，除非松开鼠标
+            if (this.isShootArrow) {
+                this.attackCooldown = 60
+            }
+        }
         if (this.attackCooldown > this.attackCooldownTime) {
+            if (!this.isShootArrow) {
+                this.attackCooldown = 0;
+            }
             this.isCloseAttack = false;
-            this.attackCooldown = 0;
         }
     }
 
@@ -103,6 +113,26 @@ export class Player {
         }
     }
 
+    // 玩家射箭
+    shootArrow(x, y) {
+        let dx = x - player.x;
+        let dy = y - player.y;
+        let length = Math.sqrt(dx * dx + dy * dy);
+        let bulletSpeed = 5;
+        let damage = this.damage;
+        if (this.attackCooldown < this.attackCooldownTime) {
+            damage += this.damage * (this.attackCooldown / this.attackCooldownTime);
+            bulletSpeed += 10 * (this.attackCooldown / this.attackCooldownTime);
+        }
+        else {
+            bulletSpeed = 15;
+            damage = 20;
+        }
+        let bulletVX = (dx / length) * bulletSpeed;
+        let bulletVY = (dy / length) * bulletSpeed;
+        bullets.push(new Bullet(player.x, player.y, bulletVX, bulletVY, damage, bulletSpeed, canvas));
+    }
+
     // 绘制玩家
     draw() {
         let imageDirectionX = 48 * Math.floor(this.animationFrame / 10);
@@ -111,6 +141,7 @@ export class Player {
         if (this.vx != 0 || this.vy != 0) {
             isWalking = true;
         }
+        // 走路时动作
         if (isWalking) {
             if (this.direction === "s") {
                 imageDirectionY = 48 * 4;
@@ -125,6 +156,7 @@ export class Player {
                 imageDirectionY = 48 * 5;
             }
         }
+        // 在原地的动作
         else {
             if (this.direction === "s") {
                 imageDirectionY = 48 * 0;
@@ -139,6 +171,7 @@ export class Player {
                 imageDirectionY = 48 * 1;
             }
         }
+        // 死亡动画
         if (this.health <= 0) {
             if (this.animationFrameTime === 59 && this.animationFrame != 0) {
                 this.animationFrame = 0;
@@ -161,6 +194,7 @@ export class Player {
             this.animationFrame++;
             return;
         }
+        // 近战挥刀动作
         if (this.isCloseAttack) {
             if (this.direction === "s") {
                 imageDirectionY = 48 * 8;
@@ -176,6 +210,19 @@ export class Player {
             }
             imageDirectionX = 48 * Math.floor(this.attackCooldown / 15);
         }
+        // 蓄力拉弓动作
+        if (this.isShootArrow) {
+            if (this.direction === "a") {
+                imageDirectionY = 48 * 14;
+            }
+            else if (this.direction === "d") {
+                imageDirectionY = 48 * 13;
+            }
+            imageDirectionX = 48 * Math.floor(this.attackCooldown / 15);
+            if (this.attackCooldown > 45) {
+                imageDirectionX = 48 * 2;
+            }
+        }
         if (this.animationFrame < this.animationFrameTime) {
             this.animationFrame++;
         }
@@ -183,8 +230,9 @@ export class Player {
             this.animationFrame = 0;
         }
 
-        this.ctx.drawImage(playerImage, imageDirectionX, imageDirectionY, 48, 48, this.x - this.radius - 14 * 1.5, this.y - this.radius - 22 * 1.5, 72, 72);
+        this.ctx.drawImage(playerImage, imageDirectionX, imageDirectionY, 48, 48, this.x - this.radius - 18 * 1.5, this.y - this.radius - 25 * 1.5, 72, 72);
 
+        // 实际碰撞位置显示
         // this.ctx.beginPath();
         // this.ctx.fillStyle = "#f0149c";
         // this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);

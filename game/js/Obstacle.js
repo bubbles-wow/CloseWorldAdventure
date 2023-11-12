@@ -74,10 +74,6 @@ export class Obstacle {
         }
         let drawX = scale * imageWidth;
         let drawY = scale * imageHeight;
-
-        this.ctx.fillStyle = "gray";
-        this.ctx.beginPath();
-        //this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         this.ctx.drawImage(
             tree,
             imagePositionX,
@@ -88,7 +84,12 @@ export class Obstacle {
             this.y - drawY / 2 - offset,
             drawX, drawY
         );
-        this.ctx.fill();
+
+        // 实际碰撞位置显示
+        // this.ctx.fillStyle = "gray";
+        // this.ctx.beginPath();
+        // this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        // this.ctx.fill();
     }
 }
 
