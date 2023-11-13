@@ -167,10 +167,10 @@ export class Bomber {
             this.x += this.vx;
             this.y += this.vy;
             if (this.x + this.vx < this.radius || this.x + this.vx > this.canvas.width - this.radius) {
-                this.vx = 0;
+                this.vx *= -1;
             }
             if (this.y + this.vy < this.radius || this.y + this.vy > this.canvas.height - this.radius) {
-                this.vy = 0;
+                this.vy *= -1;
             }
             return;
         }
@@ -181,12 +181,12 @@ export class Bomber {
                 return;
             }
         }
-        
+
         // 游荡时速度慢一点
         const speed = 1;
-
-        this.vx = (Math.random() - 0.5) * speed;
-        this.vy = (Math.random() - 0.5) * speed;
+        let random = (Math.random() - 0.5) * 2;
+        this.vx = speed * Math.sqrt(1 - random * random);
+        this.vy = speed * random;
     }
 
     // 避开障碍物
@@ -217,6 +217,9 @@ export class Bomber {
 
     // 处理炸弹人的移动
     move() {
+        if (player.health <= 0) {
+            return;
+        }
         // 添加游荡效果
         const distanceToPlayer = this.getDistanceToPlayer();
 
@@ -230,6 +233,19 @@ export class Bomber {
         }
 
         this.avoidObstacles();
+
+        if (this.x > this.canvas.width - this.radius) {
+            this.x = this.canvas.width - this.radius;
+        }
+        else if (this.x < this.radius) {
+            this.x = this.radius;
+        }
+        if (this.y > this.canvas.height - this.radius) {
+            this.y = this.canvas.height - this.radius;
+        }
+        else if (this.y < this.radius) {
+            this.y = this.radius;
+        }
     }
 
     // 处理炸弹人受到击退效果

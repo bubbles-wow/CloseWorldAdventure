@@ -741,7 +741,7 @@ function moveMonsters() {
     for (let i = 0; i < monsters.length; i++) {
         monsters[i].move(player, obstacles);
         if (monsters[i].attackCooldown > 0) {
-            monsters[i].attackCooldown -= 16; // 每帧减少冷却时间
+            monsters[i].attackCooldown++; // 每帧减少冷却时间
         }
     }
 }

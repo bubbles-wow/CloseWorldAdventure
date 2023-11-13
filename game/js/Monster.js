@@ -19,12 +19,16 @@ export class Monster {
         this.radius = 15; // 怪物半径
         this.speed = 1.5; // 怪物移动速度
         this.health = 100; // 怪物生命值
+        this.isAttack = false; // 怪物是否攻击
         this.attackCooldown = 0; // 攻击冷却时间
-        this.attackCooldownTime = 2000; // 攻击冷却时间阈值
+        this.attackCooldownTime = 120; // 攻击冷却时间阈值
         this.pursuitPlayerDistance = distance; // 怪物追踪玩家的距离阈值
         this.isWander = false; // 怪物是否游荡
         this.wanderCooldown = Math.random() * 100; // 游荡冷却时间
         this.wanderCooldownTime = 300; // 游荡冷却时间阈值
+        this.direction = "d" // 怪物朝向
+        this.animationFrame = Math.random() * 59; // 动画帧
+        this.animationFrameTime = 59; // 动画帧阈值
     }
 
     // 处理怪物攻击玩家
@@ -33,7 +37,8 @@ export class Monster {
             return;
         }
         else {
-            this.attackCooldown = this.attackCooldownTime;
+            this.attackCooldown++;
+            this.isAttack = true;
             if (player.shield == 0) {
                 player.health -= this.damage;
             }
@@ -46,6 +51,8 @@ export class Monster {
     }
 
     pursuitPlayer() {
+        this.vx = 0;
+        this.vy = 0;
         let dx = player.x - this.x;
         let dy = player.y - this.y;
         let distanceToPlayer = Math.sqrt(dx * dx + dy * dy);
@@ -55,10 +62,18 @@ export class Monster {
 
         if (distanceToPlayer > this.radius + player.radius + 5) {
             // 怪物和玩家之间没有碰撞，可以直接追击
-            this.x += directionX * this.speed;
-            this.y += directionY * this.speed;
+            this.vx = directionX * this.speed;
+            this.vy = directionY * this.speed;
+            this.x += this.vx;
+            this.y += this.vy;
         } else {
             this.attackPlayer(directionX, directionY);
+            if (dx > 0) {
+                this.direction = "d";
+            }
+            else {
+                this.direction = "a";
+            }
         }
     }
 
@@ -85,10 +100,10 @@ export class Monster {
             this.x += this.vx;
             this.y += this.vy;
             if (this.x + this.vx < this.radius || this.x + this.vx > this.canvas.width - this.radius) {
-                this.vx = 0;
+                this.vx *= -1;
             }
             if (this.y + this.vy < this.radius || this.y + this.vy > this.canvas.height - this.radius) {
-                this.vy = 0;
+                this.vy *= -1;
             }
             return;
         }
@@ -102,9 +117,9 @@ export class Monster {
 
         // 游荡时速度慢一点
         const speed = 1;
-
-        this.vx = (Math.random() - 0.5) * speed;
-        this.vy = (Math.random() - 0.5) * speed;
+        let random = (Math.random() - 0.5) * 2;
+        this.vx = speed * Math.sqrt(1 - random * random);
+        this.vy = speed * random;
     }
 
     // 避开障碍物
@@ -135,8 +150,19 @@ export class Monster {
 
     // 处理怪物的移动
     move() {
+        if (player.health <= 0) {
+            return;
+        }
         // 添加游荡效果
         const distanceToPlayer = this.getDistanceToPlayer();
+
+        // 攻击冷却时间计算
+        if (this.attackCooldown > 0) {
+            this.attackCooldown++;
+        }
+        if (this.attackCooldown > this.attackCooldownTime) {
+            this.attackCooldown = 0;
+        }
 
         // 如果距离玩家很近，怪物会追踪玩家
         if (distanceToPlayer < this.pursuitPlayerDistance && player.health >= 0) {
@@ -147,6 +173,19 @@ export class Monster {
         }
 
         this.avoidObstacles();
+
+        if (this.x > this.canvas.width - this.radius) {
+            this.x = this.canvas.width - this.radius;
+        }
+        else if (this.x < this.radius) {
+            this.x = this.radius;
+        }
+        if (this.y > this.canvas.height - this.radius) {
+            this.y = this.canvas.height - this.radius;
+        }
+        else if (this.y < this.radius) {
+            this.y = this.radius;
+        }
     }
 
     // 处理怪物受到击退效果
@@ -176,10 +215,94 @@ export class Monster {
 
     // 绘制怪物
     draw() {
+        let imageDirectionX = 48 * Math.floor(this.animationFrame / 10);
+        let imageDirectionY = 0;
+        let isMove = false;
+        if (this.vx != 0 || this.vy != 0) {
+            if (this.getDistanceToPlayer() < this.pursuitPlayerDistance || this.isWander) {
+                isMove = true;
+            }
+            else {
+                this.vx = 0;
+                this.vy = 0;
+            }
+        }
+        if (this.vx > 0) {
+            this.direction = "d";
+        }
+        else if (this.vx < 0) {
+            this.direction = "a";
+        }
+        // 走路时动作
+        if (isMove) {
+            if (this.direction === "a") {
+                imageDirectionY = 48 * 3;
+            }
+            else if (this.direction === "d") {
+                imageDirectionY = 48 * 2;
+            }
+        }
+        // 在原地的动作
+        else {
+            if (this.direction === "a") {
+                imageDirectionY = 48 * 1;
+            }
+            else if (this.direction === "d") {
+                imageDirectionY = 48 * 0;
+            }
+            imageDirectionX = 48 * Math.floor(this.animationFrame / 15);
+        }
+        // 死亡动画
+        // if (this.health <= 0) {
+        //     if (this.animationFrameTime === 59 && this.animationFrame != 0) {
+        //         this.animationFrame = 0;
+        //         this.animationFrameTime = 180;
+        //     }
+        //     imageDirectionY = 48 * 12;
+        //     if (this.animationFrame < 30) {
+        //         imageDirectionX = 48 * 0;
+        //     }
+        //     else if (this.animationFrame < 60) {
+        //         imageDirectionX = 48 * 1;
+        //     }
+        //     else if (this.animationFrame < 180) {
+        //         imageDirectionX = 48 * 2;
+        //     }
+        //     if (this.animationFrame === 180) {
+        //         this.isDead = true;
+        //     }
+        //     this.ctx.drawImage(playerImage, imageDirectionX, imageDirectionY, 48, 48, this.x - this.radius - 14 * 1.5, this.y - this.radius - 22 * 1.5, 72, 72);
+        //     this.animationFrame++;
+        //     return;
+        // }
+        // 近战挥刀动作
+        if (this.isAttack) {
+            if (this.direction === "a") {
+                imageDirectionY = 48 * 5;
+            }
+            else if (this.direction === "d") {
+                imageDirectionY = 48 * 4;
+            }
+            imageDirectionX = 48 * Math.floor(this.attackCooldown / 15);
+            if (this.attackCooldown >= 59) {
+                this.isAttack = false;
+            }
+        }
+        if (this.animationFrame < this.animationFrameTime) {
+            this.animationFrame++;
+        }
+        else {
+            this.animationFrame = 0;
+        }
+
+        this.ctx.drawImage(skeletonImage, imageDirectionX, imageDirectionY, 48, 48, this.x - this.radius - 17 * 2, this.y - this.radius - 28 * 2, 48 * 2, 48 * 2);
+
+
         this.ctx.beginPath();
-        this.ctx.fillStyle = "red";
-        this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        this.ctx.fill();
+        // 实际碰撞箱显示
+        // this.ctx.fillStyle = "red";
+        // this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        // this.ctx.fill();
 
         this.ctx.fillStyle = "gray";
         this.ctx.fillRect(this.x - 15, this.y - this.radius - 10, 30, 5);
@@ -194,3 +317,5 @@ export class Monster {
 }
 
 export const monsters = [];
+const skeletonImage = new Image();
+skeletonImage.src = "./res/skeleton1.png";
