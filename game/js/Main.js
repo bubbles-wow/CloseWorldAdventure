@@ -269,67 +269,35 @@ canvas.addEventListener("contextmenu", (event) => {
 
 document.addEventListener("keydown", handleKeyDown);
 document.addEventListener("keyup", handleKeyUp);
+let keyState = {}; // 存储按下的键的信息
 
-// 处理按键按下事件
+// 确定玩家移动方向和暂停功能实现，按下按键即改变玩家的方向
 function handleKeyDown(event) {
     if (player.health <= 0) {
         return;
     }
+    keyState[event.key] = true;
     let direction = player.direction;
-    let speed = player.speed;
-    if (player.isShootArrow) {
-        speed = 0.5;
-    }
     switch (event.key) {
+        // 往上走
         case "w":
         case "W":
-            player.vy = -speed; // 上
-            // 主要是处理走斜线的时候两个方向的速度有加成，但会感觉手感不好，卡顿
-            if (Math.abs(player.vx) == speed) {
-                player.vx /= Math.sqrt(2);
-                player.vy /= Math.sqrt(2);
-            }
-            // 尝试解决蓄力时减速时间不匹配的问题，好像没有用
-            else if (Math.abs(player.vx) != 0) {
-                player.vx = player.vx / Math.abs(player.vx) * speed;
-            }
             player.direction = "w";
             break;
+        // 往下走
         case "s":
         case "S":
-            player.vy = speed; // 下
-            if (Math.abs(player.vx) == speed) {
-                player.vx /= Math.sqrt(2);
-                player.vy /= Math.sqrt(2);
-            }
-            else if (Math.abs(player.vx) != 0) {
-                player.vx = player.vx / Math.abs(player.vx) * speed;
-            }
             player.direction = "s";
             break;
+        // 往左走
         case "a":
         case "A":
-            player.vx = -speed; // 左
-            if (Math.abs(player.vy) == speed) {
-                player.vx /= Math.sqrt(2);
-                player.vy /= Math.sqrt(2);
-            }
-            else if (Math.abs(player.vy) != 0) {
-                player.vy = player.vy / Math.abs(player.vy) * speed;
-            }
-            player.direction = "a"
+            player.direction = "a";
             break;
+        // 往右走
         case "d":
         case "D":
-            player.vx = speed; // 右
-            if (Math.abs(player.vy) == speed) {
-                player.vx /= Math.sqrt(2);
-                player.vy /= Math.sqrt(2);
-            }
-            else if (Math.abs(player.vy) != 0) {
-                player.vy = player.vy / Math.abs(player.vy) * speed;
-            }
-            player.direction = "d"
+            player.direction = "d";
             break;
         // 按下空格键暂停游戏
         case " ": {
@@ -356,8 +324,9 @@ function handleKeyDown(event) {
     }
 }
 
-// 处理按键松开事件
+// 按键松开时停止玩家某方向的移动
 function handleKeyUp(event) {
+    keyState[event.key] = false;
     switch (event.key) {
         case "w":
         case "W":
@@ -384,6 +353,74 @@ function handleKeyUp(event) {
             }
             break;
     }
+}
+
+// 更新玩家速度状态
+function updatePlayerSpeed() {
+    if (player.health <= 0) {
+        return;
+    }
+    let speed = player.speed;
+    if (player.isShootArrow) {
+        speed = 0.5;
+    }
+    if (keyState["w"] || keyState["W"]) {
+        // 走斜线
+        if (Math.abs(player.vx) != 0) {
+            player.vx = (player.vx / Math.abs(player.vx)) * speed / Math.sqrt(2);
+            player.vy = -speed / Math.sqrt(2);
+        }
+        else {
+            player.vx = 0;
+            // 回头看效果
+            if (player.vy != speed) {
+                player.vy = -speed;
+            }
+        }
+    }
+    if (keyState["s"] || keyState["S"]) {
+        // 走斜线
+        if (Math.abs(player.vx) != 0) {
+            player.vx = (player.vx / Math.abs(player.vx)) * speed / Math.sqrt(2);
+            player.vy = speed / Math.sqrt(2);
+        }
+        else {
+            player.vx = 0;
+            // 回头看效果
+            if (player.vy != -speed) {
+                player.vy = speed;
+            }
+        }
+    }
+    if (keyState["a"] || keyState["A"]) {
+        // 走斜线
+        if (Math.abs(player.vy) != 0) {
+            player.vx = -speed / Math.sqrt(2);
+            player.vy = (player.vy / Math.abs(player.vy)) * speed / Math.sqrt(2);
+        }
+        else {
+            // 回头看效果
+            if (player.vx != speed) {
+                player.vx = -speed;
+            }
+            player.vy = 0;
+        }
+    }
+    if (keyState["d"] || keyState["D"]) {
+        // 走斜线
+        if (Math.abs(player.vy) != 0) {
+            player.vx = speed / Math.sqrt(2);
+            player.vy = (player.vy / Math.abs(player.vy)) * speed / Math.sqrt(2);
+        }
+        else {
+            // 回头看效果
+            if (player.vx != -speed) {
+                player.vx = speed;
+            }
+            player.vy = 0;
+        }
+    }
+    console.log(player.vx, player.vy);
 }
 
 // 处理子弹的移动
@@ -936,6 +973,7 @@ function reward() {
 // 游戏循环
 function gameLoop() {
     if (!isPause && !isHelp) {
+        updatePlayerSpeed()
         generateObstacles();
         generateGrass();
         if (player.health > 0) {
