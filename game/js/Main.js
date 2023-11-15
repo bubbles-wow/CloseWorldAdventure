@@ -370,7 +370,6 @@ function updatePlayerSpeed() {
     if (player.isShootArrow) {
         speed = player.shootingSpeed;
     }
-    console.log(player.isShootArrow, speed, player.speed);
     if (keyState["w"] || keyState["W"]) {
         // 走斜线
         if (Math.abs(player.vx) != 0) {
