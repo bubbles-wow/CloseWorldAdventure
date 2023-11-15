@@ -52,8 +52,8 @@ export class Bomber {
         }
 
         for (let i = 0; i < monsters.length; i++) {
-            let dx = this.x - monsters[i].x;
-            let dy = this.y - monsters[i].y;
+            let dx = monsters[i].x - this.x;
+            let dy = monsters[i].y - this.y;
             let distanceToMonster = Math.sqrt(dx * dx + dy * dy);
             if (distanceToMonster < this.bombRadius + monsters[i].radius + this.bombRadius) {
                 monsters[i].health -= this.damage;
@@ -69,8 +69,8 @@ export class Bomber {
         }
 
         for (let i = 0; i < rangedMonsters.length; i++) {
-            let dx = this.x - rangedMonsters[i].x;
-            let dy = this.y - rangedMonsters[i].y;
+            let dx = rangedMonsters[i].x - this.x;
+            let dy = rangedMonsters[i].y - this.y;
             let distanceToRangedMonster = Math.sqrt(dx * dx + dy * dy);
             if (distanceToRangedMonster < this.bombRadius + rangedMonsters[i].radius + this.bombRadius) {
                 rangedMonsters[i].health -= this.damage;
@@ -89,8 +89,8 @@ export class Bomber {
             if (bombers[i] == this) {
                 continue;
             }
-            let dx = this.x - bombers[i].x;
-            let dy = this.y - bombers[i].y;
+            let dx = bombers[i].x - this.x;
+            let dy = bombers[i].y - this.y;
             let distanceToBomber = Math.sqrt(dx * dx + dy * dy);
             if (distanceToBomber < this.bombRadius + bombers[i].radius + this.bombRadius) {
                 bombers[i].health -= this.damage;

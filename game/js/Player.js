@@ -10,9 +10,10 @@ export class Player {
         this.radius = 10; // 玩家半径
         this.shield = 0; // 玩家目前所持护盾
         this.speed = 2; // 玩家移动速度
+        this.shootingSpeed = 0.5; // 玩家射击时速度
         this.health = 100; // 玩家生命值
         this.currentHealth = 100; // 玩家的生命值上限
-        this.score =0; // 玩家得分
+        this.score = 0; // 玩家得分
         this.vx = 0; // 水平速度
         this.vy = 0; // 垂直速度
         this.isDead = false; // 玩家是否死亡
@@ -119,18 +120,21 @@ export class Player {
         let dy = y - player.y;
         let length = Math.sqrt(dx * dx + dy * dy);
         let bulletSpeed = 5;
+        let knockbackDistance = this.knockbackDistance - 20;
         let damage = this.damage;
         if (this.attackCooldown < this.attackCooldownTime) {
             damage += this.damage * (this.attackCooldown / this.attackCooldownTime);
             bulletSpeed += 10 * (this.attackCooldown / this.attackCooldownTime);
+            knockbackDistance += 20 * (this.attackCooldown / this.attackCooldownTime);
         }
         else {
             bulletSpeed = 15;
-            damage = 20;
+            knockbackDistance *= 2;
+            damage *= 2;
         }
         let bulletVX = (dx / length) * bulletSpeed;
         let bulletVY = (dy / length) * bulletSpeed;
-        bullets.push(new Bullet(player.x, player.y, bulletVX, bulletVY, damage, bulletSpeed, canvas));
+        bullets.push(new Bullet(player.x, player.y, bulletVX, bulletVY, damage, bulletSpeed, knockbackDistance, canvas));
     }
 
     // 绘制玩家

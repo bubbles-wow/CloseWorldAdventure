@@ -68,8 +68,6 @@ canvas.addEventListener("mousedown", (event) => {
         player.isCloseAttack = false;
         player.isShootArrow = true;
         player.attackCooldown++;
-        // 蓄力射箭减速
-        player.speed = 0.5;
     }
     if (event.clientX - player.x < 0) {
         player.direction = "a";
@@ -99,7 +97,6 @@ canvas.addEventListener("mouseup", (event) => {
     }
     player.shootArrow(event.clientX, event.clientY);
     player.isShootArrow = false;
-    player.speed = 2;
     // 蓄满力后下次蓄力无需等待
     if (player.attackCooldown >= 60) {
         player.attackCooldown = 0;
@@ -277,27 +274,35 @@ function handleKeyDown(event) {
         return;
     }
     keyState[event.key] = true;
-    let direction = player.direction;
     switch (event.key) {
         // 往上走
         case "w":
         case "W":
-            player.direction = "w";
+            // 特殊状态下不能改变方向
+            if (!player.isCloseAttack && !player.isShootArrow) {
+                player.direction = "w";
+            }
             break;
         // 往下走
         case "s":
         case "S":
-            player.direction = "s";
+            if (!player.isCloseAttack && !player.isShootArrow) {
+                player.direction = "s";
+            }
             break;
         // 往左走
         case "a":
         case "A":
-            player.direction = "a";
+            if (!player.isCloseAttack && !player.isShootArrow) {
+                player.direction = "a";
+            }
             break;
         // 往右走
         case "d":
         case "D":
-            player.direction = "d";
+            if (!player.isCloseAttack && !player.isShootArrow) {
+                player.direction = "d";
+            }
             break;
         // 按下空格键暂停游戏
         case " ": {
@@ -319,9 +324,6 @@ function handleKeyDown(event) {
         }
             break;
     }
-    if (player.isCloseAttack || player.isShootArrow) {
-        player.direction = direction;
-    }
 }
 
 // 按键松开时停止玩家某方向的移动
@@ -333,11 +335,13 @@ function handleKeyUp(event) {
         case "s":
         case "S":
             player.vy = 0; // 停止垂直移动
-            if (player.vx > 0) {
-                player.direction = "d";
-            }
-            else if (player.vx < 0) {
-                player.direction = "a";
+            if (!player.isCloseAttack && !player.isShootArrow) {
+                if (player.vx > 0) {
+                    player.direction = "d";
+                }
+                else if (player.vx < 0) {
+                    player.direction = "a";
+                }
             }
             break;
         case "a":
@@ -345,11 +349,13 @@ function handleKeyUp(event) {
         case "d":
         case "D":
             player.vx = 0; // 停止水平移动
-            if (player.vy > 0) {
-                player.direction = "s";
-            }
-            else if (player.vy < 0) {
-                player.direction = "w";
+            if (!player.isCloseAttack && !player.isShootArrow) {
+                if (player.vy > 0) {
+                    player.direction = "s";
+                }
+                else if (player.vy < 0) {
+                    player.direction = "w";
+                }
             }
             break;
     }
@@ -362,8 +368,9 @@ function updatePlayerSpeed() {
     }
     let speed = player.speed;
     if (player.isShootArrow) {
-        speed = 0.5;
+        speed = player.shootingSpeed;
     }
+    console.log(player.isShootArrow, speed, player.speed);
     if (keyState["w"] || keyState["W"]) {
         // 走斜线
         if (Math.abs(player.vx) != 0) {
@@ -420,7 +427,6 @@ function updatePlayerSpeed() {
             player.vy = 0;
         }
     }
-    console.log(player.vx, player.vy);
 }
 
 // 处理子弹的移动
