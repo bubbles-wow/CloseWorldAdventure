@@ -782,9 +782,6 @@ function generateMonsters() {
 function moveMonsters() {
     for (let i = 0; i < monsters.length; i++) {
         monsters[i].move(player, obstacles);
-        if (monsters[i].attackCooldown > 0) {
-            monsters[i].attackCooldown++; // 每帧减少冷却时间
-        }
     }
 }
 
@@ -792,9 +789,6 @@ function moveMonsters() {
 function moveRangedMonsters() {
     for (let i = 0; i < rangedMonsters.length; i++) {
         rangedMonsters[i].move(player, obstacles, monsterBullets);
-        if (rangedMonsters[i].attackCooldown > 0) {
-            rangedMonsters[i].attackCooldown -= 16; // 每帧减少冷却时间
-        }
     }
 }
 
