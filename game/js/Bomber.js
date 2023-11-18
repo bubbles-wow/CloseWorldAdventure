@@ -18,16 +18,18 @@ export class Bomber {
         this.damage = 40; // 炸弹人伤害
         this.knockbackDistance = 60; // 炸弹人击退距离
         this.radius = 15; // 炸弹人半径
-        this.speed = 1.5; // 炸弹人移动速度
+        this.speed = 1.2; // 炸弹人移动速度
         this.health = 100; // 炸弹人生命值
         this.pursuitPlayerDistance = distance; // 怪物追踪玩家的距离阈值
         this.bombRadius = 50; // 炸弹人爆炸半径
-        this.bombTime = 1800; // 炸弹人爆炸时间
-        this.bombWaitTime = 1800; // 炸弹人爆炸等待时间
+        this.bombTime = 2400; // 炸弹人爆炸时间
+        this.bombWaitTime = 2400; // 炸弹人爆炸等待时间
         this.isDead = false; // 炸弹人是否死亡
         this.isWander = false; // 怪物是否游荡
         this.wanderCooldown = Math.random() * 100; // 游荡冷却时间
         this.wanderCooldownTime = 300; // 游荡冷却时间阈值
+        this.animationFrame = Math.random() * 59; // 怪物动画帧
+        this.animationFrameTime = 59; // 怪物动画帧阈值
     }
 
     bomb() {
@@ -109,6 +111,7 @@ export class Bomber {
 
     }
 
+    // 处理炸弹人追踪玩家
     pursuitPlayer() {
         let dx = player.x - this.x;
         let dy = player.y - this.y;
@@ -117,12 +120,13 @@ export class Bomber {
         let directionX = dx / distanceToPlayer;
         let directionY = dy / distanceToPlayer;
 
-        if (distanceToPlayer < this.radius + player.radius + this.pursuitPlayerDistance && player.health >= 0) {
+        if (distanceToPlayer < this.radius + player.radius + this.pursuitPlayerDistance && player.health > 0) {
             // 炸弹人和玩家之间没有碰撞，可以直接追击
             if (distanceToPlayer > this.radius + player.radius + 5) {
-                this.x += directionX * this.speed;
-                this.y += directionY * this.speed;
-
+                this.vx = directionX * this.speed;
+                this.vy = directionY * this.speed;
+                this.x += this.vx;
+                this.y += this.vy;
             }
             // 距离稍远，自爆倒计时重置
             if (distanceToPlayer > this.radius + player.radius + this.pursuitPlayerDistance / 2) {
@@ -148,7 +152,7 @@ export class Bomber {
     wander() {
         this.wanderCooldown++;
         // 现在怪物会随机往某个方向移动一段时间后停止，而不是一直在动
-        if (this.wanderCooldown == 180) {
+        if (this.wanderCooldown == this.wanderCooldownTime / 2) {
             this.isWander = false;
             this.vx = 0;
             this.vy = 0;
@@ -217,14 +221,11 @@ export class Bomber {
 
     // 处理炸弹人的移动
     move() {
-        if (player.health <= 0) {
-            return;
-        }
         // 添加游荡效果
-        const distanceToPlayer = this.getDistanceToPlayer();
+        let distanceToPlayer = this.getDistanceToPlayer();
 
         // 如果距离玩家很近，炸弹人会追踪玩家
-        if (distanceToPlayer < this.pursuitPlayerDistance && player.health >= 0) {
+        if (distanceToPlayer < this.pursuitPlayerDistance && player.health > 0) {
             this.pursuitPlayer();
         }
         else {
@@ -278,26 +279,54 @@ export class Bomber {
         if (this.isDead) {
             return;
         }
+        let imageDirectionX = 48 * Math.floor(this.animationFrame / 15);
+        let imageDirectionY = 0;
+        if (this.vx > 0) {
+            this.direction = "d";
+        }
+        else if (this.vx < 0) {
+            this.direction = "a";
+        }
+        if (this.direction === "a") {
+            imageDirectionY = 48 * 1;
+        }
+        else if (this.direction === "d") {
+            imageDirectionY = 48 * 0;
+        }
         // 自爆前闪烁提示
         if (this.bombWaitTime / 300 % 2 > 1) {
-            this.ctx.fillStyle = "white";
+            imageDirectionY += 48 * 2;
+        }
+        // 更新动画帧
+        if (this.animationFrame < this.animationFrameTime) {
+            this.animationFrame++;
         }
         else {
-            this.ctx.fillStyle = "#98e61a";
+            this.animationFrame = 0;
         }
+        
+        this.ctx.drawImage(skullImage, imageDirectionX, imageDirectionY, 48, 48, this.x - this.radius - 18 * 2.5, this.y - this.radius - 30 * 2.5, 48 * 2.5, 48 * 2.5);
+
         this.ctx.beginPath();
-        this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        this.ctx.fill();
         // 绘制生命值条
         this.ctx.fillStyle = "gray";
         this.ctx.fillRect(this.x - 15, this.y - this.radius - 10, 30, 5);
-
         this.ctx.fillStyle = "black"
         this.ctx.strokeRect(this.x - 15, this.y - this.radius - 10, 30, 5);
         // 绘制生命值
         this.ctx.fillStyle = "green";
         let healthBarWidth = (this.health / 100) * 30;
         this.ctx.fillRect(this.x - 15, this.y - this.radius - 10, healthBarWidth, 5);
+
+        // 碰撞箱显示
+        // if (this.bombWaitTime / 300 % 2 > 1) {
+        //     this.ctx.fillStyle = "white";
+        // }
+        // else {
+        //     this.ctx.fillStyle = "#98e61a";
+        // }
+        // this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        // this.ctx.fill();
     }
 }
 
@@ -337,3 +366,5 @@ export class BomberExplosion {
 
 export const bombers = []; // 存储所有炸弹人的数组
 export const bomberExplosions = [] // 存储所有炸弹人爆炸特效的数组
+const skullImage = new Image();
+skullImage.src = "./res/skull.png";

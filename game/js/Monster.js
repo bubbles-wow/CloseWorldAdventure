@@ -17,7 +17,7 @@ export class Monster {
         this.damage = 10; // 怪物伤害
         this.knockbackDistance = 20; // 怪物击退距离
         this.radius = 15; // 怪物半径
-        this.speed = 1.5; // 怪物移动速度
+        this.speed = 1.2; // 怪物移动速度
         this.health = 100; // 怪物生命值
         this.isAttack = false; // 怪物是否攻击
         this.attackCooldown = 0; // 攻击冷却时间
@@ -33,26 +33,18 @@ export class Monster {
 
     // 处理怪物攻击玩家
     attackPlayer(directionX, directionY) {
-        if (this.attackCooldown > 0 || player.health <= 0) {
-            return;
+        if (player.shield == 0) {
+            player.health -= this.damage;
         }
         else {
-            this.attackCooldown++;
-            this.isAttack = true;
-            if (player.shield == 0) {
-                player.health -= this.damage;
-            }
-            else {
-                player.shield -= this.damage;
-            }
-            generateBloodSplash(player.x, player.y);
-            player.knockback(this.knockbackDistance, directionX, directionY);
+            player.shield -= this.damage;
         }
+        generateBloodSplash(player.x, player.y);
+        player.knockback(this.knockbackDistance, directionX, directionY);
     }
 
+    // 处理怪物追踪玩家
     pursuitPlayer() {
-        this.vx = 0;
-        this.vy = 0;
         let dx = player.x - this.x;
         let dy = player.y - this.y;
         let distanceToPlayer = Math.sqrt(dx * dx + dy * dy);
@@ -61,18 +53,24 @@ export class Monster {
         let directionY = dy / distanceToPlayer;
 
         if (distanceToPlayer > this.radius + player.radius + 5) {
-            // 怪物和玩家之间没有碰撞，可以直接追击
             this.vx = directionX * this.speed;
             this.vy = directionY * this.speed;
             this.x += this.vx;
             this.y += this.vy;
-        } else {
-            this.attackPlayer(directionX, directionY);
-            if (dx > 0) {
+        }
+        else {
+            if (this.attackCooldown == 0) {
+                this.isAttack = true;
+                this.attackCooldown++;
+            }
+            if (directionX > 0) {
                 this.direction = "d";
             }
             else {
                 this.direction = "a";
+            }
+            if (this.isAttack && this.attackCooldown == 25) {
+                this.attackPlayer(directionX, directionY);
             }
         }
     }
@@ -81,7 +79,7 @@ export class Monster {
     wander() {
         this.wanderCooldown++;
         // 现在怪物会随机往某个方向移动一段时间后停止，而不是一直在动
-        if (this.wanderCooldown == 180) {
+        if (this.wanderCooldown == this.wanderCooldownTime / 2) {
             this.isWander = false;
             this.vx = 0;
             this.vy = 0;
@@ -150,11 +148,8 @@ export class Monster {
 
     // 处理怪物的移动
     move() {
-        if (player.health <= 0) {
-            return;
-        }
         // 添加游荡效果
-        const distanceToPlayer = this.getDistanceToPlayer();
+        let distanceToPlayer = this.getDistanceToPlayer();
 
         // 攻击冷却时间计算
         if (this.attackCooldown > 0) {
@@ -165,7 +160,7 @@ export class Monster {
         }
 
         // 如果距离玩家很近，怪物会追踪玩家
-        if (distanceToPlayer < this.pursuitPlayerDistance && player.health >= 0) {
+        if (distanceToPlayer < this.pursuitPlayerDistance && player.health > 0) {
             this.pursuitPlayer();
         }
         else {
@@ -219,7 +214,7 @@ export class Monster {
         let imageDirectionY = 0;
         let isMove = false;
         if (this.vx != 0 || this.vy != 0) {
-            if (this.getDistanceToPlayer() < this.pursuitPlayerDistance || this.isWander) {
+            if (this.getDistanceToPlayer() < this.pursuitPlayerDistance && player.health > 0 || this.isWander) {
                 isMove = true;
             }
             else {
@@ -252,29 +247,6 @@ export class Monster {
             }
             imageDirectionX = 48 * Math.floor(this.animationFrame / 15);
         }
-        // 死亡动画
-        // if (this.health <= 0) {
-        //     if (this.animationFrameTime === 59 && this.animationFrame != 0) {
-        //         this.animationFrame = 0;
-        //         this.animationFrameTime = 180;
-        //     }
-        //     imageDirectionY = 48 * 12;
-        //     if (this.animationFrame < 30) {
-        //         imageDirectionX = 48 * 0;
-        //     }
-        //     else if (this.animationFrame < 60) {
-        //         imageDirectionX = 48 * 1;
-        //     }
-        //     else if (this.animationFrame < 180) {
-        //         imageDirectionX = 48 * 2;
-        //     }
-        //     if (this.animationFrame === 180) {
-        //         this.isDead = true;
-        //     }
-        //     this.ctx.drawImage(playerImage, imageDirectionX, imageDirectionY, 48, 48, this.x - this.radius - 14 * 1.5, this.y - this.radius - 22 * 1.5, 72, 72);
-        //     this.animationFrame++;
-        //     return;
-        // }
         // 近战挥刀动作
         if (this.isAttack) {
             if (this.direction === "a") {
@@ -288,6 +260,7 @@ export class Monster {
                 this.isAttack = false;
             }
         }
+        // 更新动画帧
         if (this.animationFrame < this.animationFrameTime) {
             this.animationFrame++;
         }
@@ -299,20 +272,20 @@ export class Monster {
 
 
         this.ctx.beginPath();
+        // 绘制生命值条
+        this.ctx.fillStyle = "gray";
+        this.ctx.fillRect(this.x - 15, this.y - this.radius - 10, 30, 5);
+        this.ctx.fillStyle = "black"
+        this.ctx.strokeRect(this.x - 15, this.y - this.radius - 10, 30, 5);
+        // 绘制生命值
+        this.ctx.fillStyle = "green";
+        let healthBarWidth = (this.health / 100) * 30;
+        this.ctx.fillRect(this.x - 15, this.y - this.radius - 10, healthBarWidth, 5);
+
         // 实际碰撞箱显示
         // this.ctx.fillStyle = "red";
         // this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         // this.ctx.fill();
-
-        this.ctx.fillStyle = "gray";
-        this.ctx.fillRect(this.x - 15, this.y - this.radius - 10, 30, 5);
-
-        this.ctx.fillStyle = "black"
-        this.ctx.strokeRect(this.x - 15, this.y - this.radius - 10, 30, 5);
-
-        this.ctx.fillStyle = "green";
-        let healthBarWidth = (this.health / 100) * 30;
-        this.ctx.fillRect(this.x - 15, this.y - this.radius - 10, healthBarWidth, 5);
     }
 }
 
