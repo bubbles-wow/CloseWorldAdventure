@@ -9,11 +9,12 @@ export class DropLoot {
     }
 
     draw() {
-        this.ctx.beginPath();
-        this.ctx.fillStyle = "#FFC0CB";
-        this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        this.ctx.fill();
+        this.ctx.save();
+        this.ctx.drawImage(dropLootImage, 22, 42, 173, 138, this.x - 173 / 12, this.y - 15, 173 / 6, 23);
+        this.ctx.restore();
     }
 }
 
 export const dropLoots = [];
+const dropLootImage = new Image();
+dropLootImage.src = "./res/dropLoot.png"

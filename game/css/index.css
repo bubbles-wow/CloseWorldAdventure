@@ -6,25 +6,34 @@ body {
     z-index: 100;
 }
 #gameOverScreen {
+    background-color: blanchedalmond;
     position: absolute;
     text-align: center;
-    top: 30%;
-    left: 0;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     width: 100%;
     height: 100%;
     display: none;
+    justify-content: center;
+    align-items: center;
     z-index: 2;
 }
 #gameStartScreen {
     background-color: blanchedalmond;
     position: absolute;
     text-align: center;
-    top: 30%;
-    left: 0;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     width: 100%;
     height: 100%;
+    display: block;
+    justify-content: center;
+    align-items: center;
     z-index: 2;
 }
+
 #helpButton {
     position: absolute;
     user-select: none;
@@ -47,7 +56,7 @@ body {
     padding-top: 10%;
 }
 #Canvas {
-    background-color: blanchedalmond;
+    background-color: #509b66;
     position: absolute;
     top: 0;
     left: 0;

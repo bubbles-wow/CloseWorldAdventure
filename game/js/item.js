@@ -13,10 +13,9 @@ export class SpeedItem {
 
     // 绘制道具
     draw() {
-        this.ctx.fillStyle = "green";
-        this.ctx.beginPath();
-        this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        this.ctx.fill();
+        this.ctx.save();
+        this.ctx.drawImage(speedItemImage, 710, 450, 91, 220, this.x - 10, this.y - 20, 20, 40);
+        this.ctx.restore();
     }
     // 避开障碍物生成
     avoidObstacles() {
@@ -50,10 +49,9 @@ export class ShieldsItem {
 
     // 绘制护盾类道具
     draw() {
-        this.ctx.fillStyle = "white";
-        this.ctx.beginPath();
-        this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        this.ctx.fill();
+        this.ctx.save();
+        this.ctx.drawImage(shieldItemImage, 160, 0, 724, 1080, this.x - 7.24, this.y - 10.8, 14.48, 21.6);
+        this.ctx.restore();
     }
 
     avoidObstacles() {
@@ -76,3 +74,7 @@ export class ShieldsItem {
 
 export const speedItems = [];
 export const shieldItems = [];
+const speedItemImage = new Image();
+speedItemImage.src = "./res/speedItem.png";
+const shieldItemImage = new Image();
+shieldItemImage.src = "./res/shieldItem.png";
