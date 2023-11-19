@@ -1,6 +1,6 @@
 import { obstacles } from "./Obstacle.js";
 import { Bullet, bullets } from "./Bullet.js";
-
+import { StrengthenedBullet, strengthenedBullets } from "./Skill.js";
 export class Player {
     constructor(canvas) {
         this.canvas = canvas;
@@ -21,6 +21,7 @@ export class Player {
         this.closeAttackDistance = 50; // 玩家近战攻击距离
         this.knockbackDistance = 40; // 玩家近战击退距离
         this.attackCooldown = 0; // 攻击冷却时间
+        this.isOnCooldown = false; // 爆炸箭冷却时间
         this.attackCooldownTime = 59; // 攻击冷却时间阈值
         this.animationFrame = 0; // 玩家动画帧
         this.animationFrameTime = 59; // 玩家动画帧阈值
@@ -134,7 +135,16 @@ export class Player {
         }
         let bulletVX = (dx / length) * bulletSpeed;
         let bulletVY = (dy / length) * bulletSpeed;
-        bullets.push(new Bullet(player.x, player.y, bulletVX, bulletVY, damage, bulletSpeed, knockbackDistance, canvas));
+        if (!this.isOnCooldown) {
+            strengthenedBullets.push(new StrengthenedBullet(player.x, player.y, bulletVX, bulletVY, bulletSpeed, canvas));
+            this.isOnCooldown = true;
+            setTimeout(() => {
+                this.isOnCooldown = false;
+            }, 10000);
+        }
+        if (strengthenedBullets.length == 0) {
+            bullets.push(new Bullet(player.x, player.y, bulletVX, bulletVY, damage, bulletSpeed, canvas));
+        }
     }
 
     // 绘制玩家

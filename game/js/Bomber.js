@@ -28,6 +28,7 @@ export class Bomber {
         this.isWander = false; // 怪物是否游荡
         this.wanderCooldown = Math.random() * 100; // 游荡冷却时间
         this.wanderCooldownTime = 300; // 游荡冷却时间阈值
+        this.isAttackedByStrengthenedBullets = false; // 是否受到爆炸箭伤害
         this.animationFrame = Math.random() * 59; // 怪物动画帧
         this.animationFrameTime = 59; // 怪物动画帧阈值
     }
