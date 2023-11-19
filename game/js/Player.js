@@ -143,7 +143,7 @@ export class Player {
             }, 10000);
         }
         if (strengthenedBullets.length == 0) {
-            bullets.push(new Bullet(player.x, player.y, bulletVX, bulletVY, damage, bulletSpeed, canvas));
+            bullets.push(new Bullet(player.x, player.y, bulletVX, bulletVY, damage, bulletSpeed, knockbackDistance, canvas));
         }
     }
 

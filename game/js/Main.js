@@ -72,8 +72,6 @@ canvas.addEventListener("mousedown", (event) => {
         player.isCloseAttack = false;
         player.isShootArrow = true;
         player.attackCooldown++;
-        // 蓄力射箭减速
-        player.speed = 0.5;
     }
     if (event.clientX - player.x < 0) {
         player.direction = "a";
