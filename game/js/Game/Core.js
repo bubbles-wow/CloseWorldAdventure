@@ -14,6 +14,16 @@ export const maxSpeedItem = 1;
 export const maxShieldItem = 1;
 export let monsterWave = 0;
 
+export let gameStartScreen = document.getElementById("gameStartScreen");
+export let gameOverScreen = document.getElementById("gameOverScreen");
+export let startButton = document.getElementById("startButton");
+export let helpButton = document.getElementById("helpButton");
+export let helpScreen = document.getElementById("helpScreen");
+export let closeButton = document.getElementById("closeButton");
+export let skipButton = document.getElementById("skipButton");
+gameStartScreen.style.paddingTop = window.innerHeight / 1.5 + "px";
+gameOverScreen.style.paddingTop = window.innerHeight / 1.5 + "px";
+
 export function setMonsterWave(int) {
     monsterWave = int;
 }

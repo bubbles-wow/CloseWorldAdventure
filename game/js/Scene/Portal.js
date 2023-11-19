@@ -4,6 +4,9 @@ import { player } from "../Player/Player.js";
 
 import { obstacles, littlePlants } from "../Scene/Obstacle.js";
 
+import { dropLoots } from "./DropLoot.js";
+import { shieldItems, speedItems } from "./item.js";
+
 export class Portal {
     constructor(x, y, canvas) {
         this.x = x; // 传送门 x 坐标
@@ -118,6 +121,9 @@ export function generatePortal() {
 export function refreshScene() {
     obstacles.length = 0;
     littlePlants.length = 0;
+    dropLoots.length = 0;
+    speedItems.length = 0;
+    shieldItems.length = 0;
     if (portal[0].waitRefreshSceneTime > 0) {
         portal[0].waitRefreshSceneTime--;
     }

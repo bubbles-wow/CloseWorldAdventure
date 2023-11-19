@@ -1,4 +1,4 @@
-import { canvas, isHelp, isPause, setIsPause } from "../Game/Core.js";
+import { canvas, isHelp, isPause, isStart, setIsPause } from "../Game/Core.js";
 
 import { Bullet, bullets } from "../Player/Bullet.js";
 import { StrengthenedBullet, strengthenedBullets } from "../Player/Skill.js";
@@ -549,7 +549,7 @@ export function handleKeyDown(event) {
             break;
         // 按下空格键暂停游戏
         case " ":
-            if (!isHelp) {
+            if (!isHelp && !isStart) {
                 setIsPause(!isPause);
             }
             else {

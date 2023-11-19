@@ -1,4 +1,4 @@
-import { canvas, isTheFirst3, setIsTheFirst3 } from "../Game/Core.js";
+import { canvas, isStart, isTheFirst3, setIsTheFirst3 } from "../Game/Core.js";
 
 import { player } from "../Player/Player.js";
 
@@ -27,6 +27,10 @@ dropLootImage.src = "./res/dropLoot.png"
 
 // 掉落物生成
 export function generateDropLoot(x, y) {
+    // 新手教程不掉落
+    if (isStart) {
+        return;
+    }
     const dropChance = Math.random();
     if (dropChance < 0.6) {
         dropLoots.push(new DropLoot(x, y, canvas));

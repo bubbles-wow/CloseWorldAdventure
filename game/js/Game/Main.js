@@ -1,4 +1,5 @@
-import { canvas, isStart, isPause, isHelp, monsterWave, maxMonsters, setMonsterWave, setIsStart, setIsHelp } from "./Core.js";
+import { canvas, isStart, isPause, isHelp, monsterWave, maxMonsters, setMonsterWave, setIsStart, setIsHelp, setIsPause } from "./Core.js";
+import { gameStartScreen, gameOverScreen, startButton, helpButton, helpScreen, closeButton, skipButton } from "./Core.js";
 
 import { rewards } from "../Player/Reward.js";
 import { player, updatePlayerSpeed, handleKeyDown, handleKeyUp } from "../Player/Player.js";
@@ -20,6 +21,7 @@ import { speedItems, shieldItems } from "../Scene/item.js";
 import { generateItem, generateShieldItem, collectItem } from "../Scene/item.js";
 import { dropLoots, getDropLoot } from "../Scene/DropLoot.js";
 import { portal, generatePortal, checkPlayerInPortal, refreshScene } from "../Scene/Portal.js";
+import { gameStart, setIsSkip } from "../Scene/newPlayerScene.js";
 
 import { particles, moveBloodSplash } from "../Particle/BloodParticle.js";
 import { HeadTips, headTips } from "../Particle/Tips.js";
@@ -48,7 +50,7 @@ document.addEventListener("keyup", handleKeyUp);
 
 // 生成怪物
 function generateMonsters() {
-    if (monsters.length == 0 && rangedMonsters.length == 0) {
+    if (monsters.length == 0 && rangedMonsters.length == 0 && bombers.length == 0) {
         //monsterWave++;
         setMonsterWave(monsterWave + 1);
         let pursuitPlayerDistance;
@@ -140,12 +142,12 @@ function draw() {
     bomberExplosions.forEach((bomberExplosion) => bomberExplosion.draw());
     bulletExplosions.forEach((bulletExplosion) => bulletExplosion.draw());
     particles.forEach((particle) => particle.draw());
-    headTips.forEach((headTip) => {
-        headTip.draw();
-        if (headTip.animationFrame >= headTip.animationFrameTime) {
+    if (headTips.length != 0) {
+        headTips[0].draw();
+        if (headTips[0].animationFrame >= headTips[0].animationFrameTime) {
             headTips.splice(0, 1);
         }
-    });
+    }
     player.ctx.save();
     player.ctx.fillStyle = "black";
     player.ctx.font = "20px Arial";
@@ -180,7 +182,18 @@ function gameLoop() {
     const now = Date.now();
     const delta = now - then;
     if (!isPause && !isHelp && delta > interval) {
-        updatePlayerSpeed()
+        // 新手教程
+        if (isStart) {
+            updatePlayerSpeed();
+            updateScene();
+            reward();
+            checkDamage()
+            draw();
+            gameStart();
+            animationFrameId = requestAnimationFrame(gameLoop);
+            return;
+        }
+        updatePlayerSpeed();
         generateObstacles();
         generateGrass();
         if (player.health > 0) {
@@ -198,20 +211,6 @@ function gameLoop() {
         collectItem();
         getDropLoot();
         checkDamage()
-        // if (isStart) {
-        //     const ctx = canvas.getContext("2d");
-        //     ctx.save();
-        //     ctx.fillStyle = "rgb(0, 0, 0, 0)";
-        //     ctx.fillRect(0, 0, canvas.width, canvas.height);
-        //     ctx.fillStyle = "blue";
-        //     ctx.font = "30px Arial";
-        //     ctx.fillText("玩家可通过wasd移动角色，通过鼠标左键或右键进行攻击", canvas.width / 2 - 410, canvas.height / 2 - 200);
-        //     ctx.fill();
-        //     ctx.restore();
-        //     setTimeout(() => {
-        //         isStart = false;
-        //     }, 10000);
-        // }
     }
     draw();
     if (monsterWave % 4 == 0 && monsterWave != 0 && monsters.length == 0 &&
@@ -305,26 +304,19 @@ function gameOver() {
         obstacles.length = 0;
         speedItems.length = 0;
         shieldItems.length = 0;
-        isPause = false;
-        isHelp = false;
+        setIsHelp(false);
+        setIsPause(false);
+        setMonsterWave(0);
         // 重新开始游戏循环
     });
 }
 
 let animationFrameId;
-let gameStartScreen = document.getElementById("gameStartScreen");
-let gameOverScreen = document.getElementById("gameOverScreen");
-let startButton = document.getElementById("startButton");
-let helpButton = document.getElementById("helpButton");
-let helpScreen = document.getElementById("helpScreen");
-let closeButton = document.getElementById("closeButton");
-gameStartScreen.style.paddingTop = window.innerHeight / 1.5 + "px";
-gameOverScreen.style.paddingTop = window.innerHeight / 1.5 + "px";
 // 开始游戏
 startButton.addEventListener("click", () => {
     gameStartScreen.style.display = "none";
     canvas.style.display = "block";
-    //isStart = true;
+    skipButton.style.display = "block";
     setIsStart(true);
     gameLoop();
 });
@@ -339,4 +331,8 @@ closeButton.addEventListener("click", () => {
     helpScreen.style.display = "none";
     helpButton.style.display = "block";
     setIsHelp(false);
+});
+skipButton.addEventListener("click", () => {
+    setIsSkip(true);
+    skipButton.style.display = "none";
 });
