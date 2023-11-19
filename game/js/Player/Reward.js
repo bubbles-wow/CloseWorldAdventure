@@ -1,4 +1,3 @@
-import { player } from "./Player.js";
 export class Reward {
     constructor(threshold, type, value, message) {
         this.threshold = threshold;

@@ -1,6 +1,8 @@
-import { obstacles, littlePlants } from "./Obstacle.js";
-import { canvas, player, Player } from "./Player.js";
-import { headTips, HeadTips } from "./Tips.js";
+import { canvas } from "../Game/Core.js";
+
+import { player } from "../Player/Player.js";
+
+import { obstacles, littlePlants } from "../Scene/Obstacle.js";
 
 export class Portal {
     constructor(x, y, canvas) {

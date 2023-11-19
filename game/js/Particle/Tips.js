@@ -1,5 +1,3 @@
-import { canvas, player, Player } from "./Player.js";
-
 export class HeadTips {
     constructor(content, canvas) {
         this.canvas = canvas;

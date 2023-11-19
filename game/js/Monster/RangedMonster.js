@@ -1,11 +1,14 @@
-import { obstacles } from "./Obstacle.js";
-import { player } from "./Player.js";
-import { canvas } from "./Player.js";
-import { BloodParticle } from "./BloodParticle.js";
-import { particles } from "./BloodParticle.js";
-import { generateBloodSplash } from "./Main.js";
+import { canvas } from "../Game/Core.js";
 
-export class Monster {
+import { player } from "../Player/Player.js";
+
+import { MonsterBullet, monsterBullets } from "../Monster/MonsterBullet.js";
+
+import { obstacles } from "../Scene/Obstacle.js";
+
+import { generateBloodSplash } from "../Particle/BloodParticle.js";
+
+export class RangedMonster {
     constructor(x, y, distance, canvas) {
         this.x = x; // 怪物 x 坐标
         this.y = y; // 怪物 y 坐标
@@ -14,12 +17,9 @@ export class Monster {
         this.canvas = canvas;
         this.ctx = canvas.getContext("2d");
         this.score = 10; // 击杀怪物分数
-        this.damage = 10; // 怪物伤害
-        this.knockbackDistance = 20; // 怪物击退距离
         this.radius = 15; // 怪物半径
         this.speed = 1.2; // 怪物移动速度
         this.health = 100; // 怪物生命值
-        this.isAttack = false; // 怪物是否攻击
         this.attackCooldown = 0; // 攻击冷却时间
         this.attackCooldownTime = 120; // 攻击冷却时间阈值
         this.pursuitPlayerDistance = distance; // 怪物追踪玩家的距离阈值
@@ -27,24 +27,20 @@ export class Monster {
         this.wanderCooldown = Math.random() * 100; // 游荡冷却时间
         this.wanderCooldownTime = 300; // 游荡冷却时间阈值
         this.isAttackedByStrengthenedBullets = false; // 是否受到爆炸箭伤害
-        this.direction = "d" // 怪物朝向
-        this.animationFrame = Math.random() * 59; // 动画帧
-        this.animationFrameTime = 59; // 动画帧阈值
+        this.isAttack = false; // 怪物是否攻击
+        this.animationFrame = Math.random() * 59; // 怪物动画帧
+        this.animationFrameTime = 59; // 怪物动画帧阈值
     }
 
     // 处理怪物攻击玩家
-    attackPlayer(directionX, directionY) {
-        if (player.shield == 0) {
-            player.health -= this.damage;
-        }
-        else {
-            player.shield -= this.damage;
-        }
-        generateBloodSplash(player.x, player.y);
-        player.knockback(this.knockbackDistance, directionX, directionY);
+    shootPlayer(directionX, directionY) {
+        let bulletSpeed = 5;
+        let bulletVX = directionX * bulletSpeed;
+        let bulletVY = directionY * bulletSpeed;
+        monsterBullets.push(new MonsterBullet(this.x, this.y, bulletVX, bulletVY, bulletSpeed, this.canvas));
     }
 
-    // 处理怪物追踪玩家
+    //追击玩家或者逃离玩家
     pursuitPlayer() {
         let dx = player.x - this.x;
         let dy = player.y - this.y;
@@ -53,11 +49,9 @@ export class Monster {
         let directionX = dx / distanceToPlayer;
         let directionY = dy / distanceToPlayer;
 
-        if (distanceToPlayer > this.radius + player.radius + 5) {
-            this.vx = directionX * this.speed;
-            this.vy = directionY * this.speed;
-            this.x += this.vx;
-            this.y += this.vy;
+        if (distanceToPlayer < this.pursuitPlayerDistance / 4) {
+            this.avoidPlayer();
+            this.isAttack = false;
         }
         else {
             if (this.attackCooldown == 0) {
@@ -70,10 +64,38 @@ export class Monster {
             else {
                 this.direction = "a";
             }
-            if (this.isAttack && this.attackCooldown == 25) {
-                this.attackPlayer(directionX, directionY);
+            if (this.isAttack && this.attackCooldown == 45) {
+                this.shootPlayer(directionX, directionY);
+            }
+            if (distanceToPlayer > this.pursuitPlayerDistance / 2 && distanceToPlayer < this.pursuitPlayerDistance) {
+                let speed = 0.5;
+                if (distanceToPlayer > this.pursuitPlayerDistance / 1.5) {
+                    speed = this.speed;
+                    this.isAttack = false;
+                }
+                else {
+                    this.isAttack = true;
+                }
+                this.vx = directionX * speed;
+                this.vy = directionY * speed;
+                this.x += this.vx;
+                this.y += this.vy;
             }
         }
+    }
+
+    avoidPlayer() {
+        let dx = player.x - this.x;
+        let dy = player.y - this.y;
+        let distanceToPlayer = Math.sqrt(dx * dx + dy * dy);
+
+        let directionX = dy / distanceToPlayer;
+        let directionY = dx / distanceToPlayer;
+
+        this.vx = directionX * this.speed;
+        this.vy = directionY * this.speed;
+        this.x += this.vx;
+        this.y += this.vy;
     }
 
     // 处理怪物的游荡
@@ -150,7 +172,7 @@ export class Monster {
     // 处理怪物的移动
     move() {
         // 添加游荡效果
-        let distanceToPlayer = this.getDistanceToPlayer();
+        let distanceToPlayer = this.getDistanceToPlayer(player);
 
         // 攻击冷却时间计算
         if (this.attackCooldown > 0) {
@@ -166,6 +188,7 @@ export class Monster {
         }
         else {
             this.wander();
+            this.isAttack = false;
         }
 
         this.avoidObstacles();
@@ -214,7 +237,7 @@ export class Monster {
         let imageDirectionX = 48 * Math.floor(this.animationFrame / 10);
         let imageDirectionY = 0;
         let isMove = false;
-        if (this.vx != 0 || this.vy != 0) {
+        if ((this.vx != 0 || this.vy != 0) && !this.isAttack) {
             if (this.getDistanceToPlayer() < this.pursuitPlayerDistance && player.health > 0 || this.isWander) {
                 isMove = true;
             }
@@ -223,32 +246,7 @@ export class Monster {
                 this.vy = 0;
             }
         }
-        if (this.vx > 0) {
-            this.direction = "d";
-        }
-        else if (this.vx < 0) {
-            this.direction = "a";
-        }
-        // 走路时动作
-        if (isMove) {
-            if (this.direction === "a") {
-                imageDirectionY = 48 * 3;
-            }
-            else if (this.direction === "d") {
-                imageDirectionY = 48 * 2;
-            }
-        }
-        // 在原地的动作
-        else {
-            if (this.direction === "a") {
-                imageDirectionY = 48 * 1;
-            }
-            else if (this.direction === "d") {
-                imageDirectionY = 48 * 0;
-            }
-            imageDirectionX = 48 * Math.floor(this.animationFrame / 15);
-        }
-        // 近战挥刀动作
+        // 攻击动作
         if (this.isAttack) {
             if (this.direction === "a") {
                 imageDirectionY = 48 * 5;
@@ -258,7 +256,35 @@ export class Monster {
             }
             imageDirectionX = 48 * Math.floor(this.attackCooldown / 15);
             if (this.attackCooldown >= 59) {
-                this.isAttack = false;
+                //this.isAttack = false;
+                imageDirectionX = 48 * 3;
+            }
+        }
+        else {
+            if (this.vx > 0) {
+                this.direction = "d";
+            }
+            else if (this.vx < 0) {
+                this.direction = "a";
+            }
+            // 走路时动作
+            if (isMove) {
+                if (this.direction === "a") {
+                    imageDirectionY = 48 * 3;
+                }
+                else if (this.direction === "d") {
+                    imageDirectionY = 48 * 2;
+                }
+            }
+            // 在原地的动作
+            else {
+                if (this.direction === "a") {
+                    imageDirectionY = 48 * 1;
+                }
+                else if (this.direction === "d") {
+                    imageDirectionY = 48 * 0;
+                }
+                imageDirectionX = 48 * Math.floor(this.animationFrame / 15);
             }
         }
         // 更新动画帧
@@ -282,15 +308,37 @@ export class Monster {
         this.ctx.fillStyle = "green";
         let healthBarWidth = (this.health / 100) * 30;
         this.ctx.fillRect(this.x - 15, this.y - this.radius - 10, healthBarWidth, 5);
-
-        // 实际碰撞箱显示
-        // this.ctx.fillStyle = "red";
+        // 碰撞箱显示
+        // this.ctx.fillStyle = "yellow";
         // this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         // this.ctx.fill();
         this.ctx.restore();
     }
 }
 
-export const monsters = [];
+export const rangedMonsters = []; // 存储所有怪物的数组
 const skeletonImage = new Image();
-skeletonImage.src = "./res/skeleton1.png";
+skeletonImage.src = "./res/skeleton2.png";
+
+export function generateRangedMonster(x, y, pursuitPlayerDistance) {
+    obstacles.forEach(obstacle => {
+        let dx = obstacle.x - x;
+        let dy = obstacle.y - y;
+        let distance = Math.sqrt(dx * dx + dy * dy)
+        if (distance < obstacle.radius + 30) {
+            if (dx < 0) {
+                x -= obstacle.radius;
+            }
+            else {
+                x += obstacle.radius;
+            }
+            if (dy < 0) {
+                y -= obstacle.radius;
+            }
+            else {
+                y += obstacle.radius;
+            }
+        }
+    });
+    rangedMonsters.push(new RangedMonster(x, y, pursuitPlayerDistance, canvas));
+}

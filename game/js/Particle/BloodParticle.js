@@ -1,3 +1,5 @@
+import { canvas } from "../Game/Core.js";
+
 // 粒子特效
 export class BloodParticle {
     constructor(x, y, radius, canvas) {
@@ -34,3 +36,21 @@ export class BloodParticle {
 }
 
 export const particles = [];
+
+export function generateBloodSplash(x, y) {
+    for (let i = 0; i < 50; i++) {
+        const radius = Math.random() * 5 + 2;
+        const particle = new BloodParticle(x, y, radius, canvas);
+        particles.push(particle);
+    }
+}
+
+export function moveBloodSplash() {
+    for (let i = 0; i < particles.length; i++) {
+        particles[i].update();
+        if (particles[i].alpha <= 0) {
+            particles.splice(i, 1);
+            i--;
+        }
+    }
+}
