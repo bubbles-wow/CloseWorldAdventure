@@ -1,11 +1,8 @@
-import { MonsterBullet } from "./Bullet.js";
+import { canvas } from "./Core.js";
+import { MonsterBullet, monsterBullets } from "./MonsterBullet.js";
 import { obstacles } from "./Obstacle.js";
 import { player } from "./Player.js";
-import { canvas } from "./Player.js";
-import { monsterBullets } from "./Bullet.js";
-import { BloodParticle } from "./BloodParticle.js";
-import { particles } from "./BloodParticle.js";
-import { generateBloodSplash } from "./Main.js";
+import { generateBloodSplash } from "./BloodParticle.js";
 
 export class RangedMonster {
     constructor(x, y, distance, canvas) {
@@ -25,6 +22,7 @@ export class RangedMonster {
         this.isWander = false; // 怪物是否游荡
         this.wanderCooldown = Math.random() * 100; // 游荡冷却时间
         this.wanderCooldownTime = 300; // 游荡冷却时间阈值
+        this.isAttackedByStrengthenedBullets = false; // 是否受到爆炸箭伤害
         this.isAttack = false; // 怪物是否攻击
         this.animationFrame = Math.random() * 59; // 怪物动画帧
         this.animationFrameTime = 59; // 怪物动画帧阈值
@@ -295,6 +293,7 @@ export class RangedMonster {
 
         this.ctx.drawImage(skeletonImage, imageDirectionX, imageDirectionY, 48, 48, this.x - this.radius - 17 * 2, this.y - this.radius - 28 * 2, 48 * 2, 48 * 2);
 
+        this.ctx.save();
         this.ctx.beginPath();
         // 绘制生命值条
         this.ctx.fillStyle = "gray";
@@ -309,9 +308,33 @@ export class RangedMonster {
         // this.ctx.fillStyle = "yellow";
         // this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         // this.ctx.fill();
+        this.ctx.restore();
     }
 }
 
 export const rangedMonsters = []; // 存储所有怪物的数组
 const skeletonImage = new Image();
 skeletonImage.src = "./res/skeleton2.png";
+
+export function generateRangedMonster(x, y, pursuitPlayerDistance) {
+    obstacles.forEach(obstacle => {
+        let dx = obstacle.x - x;
+        let dy = obstacle.y - y;
+        let distance = Math.sqrt(dx * dx + dy * dy)
+        if (distance < obstacle.radius + 30) {
+            if (dx < 0) {
+                x -= obstacle.radius;
+            }
+            else {
+                x += obstacle.radius;
+            }
+            if (dy < 0) {
+                y -= obstacle.radius;
+            }
+            else {
+                y += obstacle.radius;
+            }
+        }
+    });
+    rangedMonsters.push(new RangedMonster(x, y, pursuitPlayerDistance, canvas));
+}

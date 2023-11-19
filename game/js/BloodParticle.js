@@ -1,3 +1,5 @@
+import { canvas } from "./Core.js";
+
 // 粒子特效
 export class BloodParticle {
     constructor(x, y, radius, canvas) {
@@ -22,13 +24,33 @@ export class BloodParticle {
 
     // 渲染粒子
     draw() {
+        this.ctx.save();
         this.ctx.globalAlpha = this.alpha;
         this.ctx.fillStyle = "red";
         this.ctx.beginPath();
         this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         this.ctx.fill();
         this.ctx.globalAlpha = 1;
+        this.ctx.restore();
     }
 }
 
 export const particles = [];
+
+export function generateBloodSplash(x, y) {
+    for (let i = 0; i < 50; i++) {
+        const radius = Math.random() * 5 + 2;
+        const particle = new BloodParticle(x, y, radius, canvas);
+        particles.push(particle);
+    }
+}
+
+export function moveBloodSplash() {
+    for (let i = 0; i < particles.length; i++) {
+        particles[i].update();
+        if (particles[i].alpha <= 0) {
+            particles.splice(i, 1);
+            i--;
+        }
+    }
+}

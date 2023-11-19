@@ -1,10 +1,9 @@
-import { Player, player } from "./Player.js";
+import { canvas } from "./Core.js";
+import { Player, player} from "./Player.js";
 import { obstacles } from "./Obstacle.js";
 import { monsters } from "./Monster.js";
 import { rangedMonsters } from "./RangedMonster.js";
-import { BloodParticle } from "./BloodParticle.js";
-import { particles } from "./BloodParticle.js";
-import { generateBloodSplash } from "./Main.js";
+import { generateBloodSplash } from "./BloodParticle.js";
 
 export class Bomber {
     constructor(x, y, distance, canvas) {
@@ -28,6 +27,7 @@ export class Bomber {
         this.isWander = false; // 怪物是否游荡
         this.wanderCooldown = Math.random() * 100; // 游荡冷却时间
         this.wanderCooldownTime = 300; // 游荡冷却时间阈值
+        this.isAttackedByStrengthenedBullets = false; // 是否受到爆炸箭伤害
         this.animationFrame = Math.random() * 59; // 怪物动画帧
         this.animationFrameTime = 59; // 怪物动画帧阈值
     }
@@ -304,9 +304,10 @@ export class Bomber {
         else {
             this.animationFrame = 0;
         }
-        
+
         this.ctx.drawImage(skullImage, imageDirectionX, imageDirectionY, 48, 48, this.x - this.radius - 18 * 2.5, this.y - this.radius - 30 * 2.5, 48 * 2.5, 48 * 2.5);
 
+        this.ctx.save();
         this.ctx.beginPath();
         // 绘制生命值条
         this.ctx.fillStyle = "gray";
@@ -327,6 +328,7 @@ export class Bomber {
         // }
         // this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         // this.ctx.fill();
+        this.ctx.restore();
     }
 }
 
@@ -360,6 +362,7 @@ export class BomberExplosion {
         this.ctx.beginPath();
         this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         this.ctx.fill();
+        this.ctx.closePath();
         this.ctx.restore();
     }
 }
@@ -368,3 +371,37 @@ export const bombers = []; // 存储所有炸弹人的数组
 export const bomberExplosions = [] // 存储所有炸弹人爆炸特效的数组
 const skullImage = new Image();
 skullImage.src = "./res/skull.png";
+
+export function generateBomber(x, y, pursuitPlayerDistance) {
+    obstacles.forEach(obstacle => {
+        let dx = obstacle.x - x;
+        let dy = obstacle.y - y;
+        let distance = Math.sqrt(dx * dx + dy * dy)
+        if (distance < obstacle.radius + 30) {
+            if (dx < 0) {
+                x -= obstacle.radius;
+            }
+            else {
+                x += obstacle.radius;
+            }
+            if (dy < 0) {
+                y -= obstacle.radius;
+            }
+            else {
+                y += obstacle.radius;
+            }
+        }
+    });
+    bombers.push(new Bomber(x, y, pursuitPlayerDistance, canvas));
+}
+
+// 炸弹特效
+export function updateBomberExplosions() {
+    for (let i = 0; i < bomberExplosions.length; i++) {
+        bomberExplosions[i].update();
+        if (bomberExplosions[i].opacity <= 0) {
+            bomberExplosions.splice(i, 1);
+            i--;
+        }
+    }
+}

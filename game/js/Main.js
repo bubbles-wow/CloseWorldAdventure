@@ -1,725 +1,58 @@
-import { Player, player } from "./Player.js";
-import { canvas } from "./Player.js";
+import { player, updatePlayerSpeed, handleKeyDown, handleKeyUp } from "./Player.js";
+import { handleRightClick, handleMouseUp, handleMouseMove, handleMouseDown } from "./Player.js";
+import { canvas, isStart, isPause, isHelp, monsterWave, maxMonsters, setMonsterWave, setIsStart, setIsHelp } from "./Core.js";
 
-import { Obstacle } from "./Obstacle.js";
-import { obstacles } from "./Obstacle.js";
-import { littlePlants } from "./Obstacle.js";
-import { LittlePlant } from "./Obstacle.js";
+import { obstacles, generateObstacles } from "./Obstacle.js";
+import { littlePlants, generateGrass } from "./Obstacle.js";
 
-import { Bullet } from "./Bullet.js";
-import { MonsterBullet } from "./Bullet.js";
-import { bullets } from "./Bullet.js";
-import { monsterBullets } from "./Bullet.js";
+import { Bullet, bullets, moveBullets, checkBulletMonsterCollision } from "./Bullet.js";
+import { monsterBullets, moveMonsterBullets, checkMonsterBulletPlayerCollision } from "./MonsterBullet.js";
 
-import { Monster } from "./Monster.js";
-import { monsters } from "./Monster.js";
+import { monsters, generateMonster } from "./Monster.js";
+import { rangedMonsters, generateRangedMonster } from "./RangedMonster.js";
+import { bombers, generateBomber } from "./Bomber.js";
+import { bomberExplosions, updateBomberExplosions } from "./Bomber.js";
 
-import { RangedMonster } from "./RangedMonster.js";
-import { rangedMonsters } from "./RangedMonster.js";
-
-
-import { Bomber } from "./Bomber.js";
-import { BomberExplosion } from "./Bomber.js";
-import { bombers } from "./Bomber.js";
-import { bomberExplosions } from "./Bomber.js";
-
-import { BloodParticle } from "./BloodParticle.js";
-import { particles } from "./BloodParticle.js";
-
-import { SpeedItem } from "./item.js";
-import { ShieldsItem } from "./item.js";
-import { speedItems } from "./item.js";
-import { shieldItems } from "./item.js";
-
-import { DropLoot } from "./DropLoot.js";
-import { dropLoots } from "./DropLoot.js";
-
-import { Reward } from "./Reward.js";
+import { speedItems, shieldItems } from "./item.js";
+import { generateItem, generateShieldItem, collectItem } from "./item.js";
+import { dropLoots, getDropLoot } from "./DropLoot.js";
 import { rewards } from "./Reward.js";
 
-import { portal, Portal, generatePortal, checkPlayerInPortal, refreshScene } from "./Portal.js";
+import { strengthenedBullets } from "./Skill.js";
+import { moveStrengthenedBullets, checkStrengthenedBulletMonsterCollision } from "./Skill.js";
+import { bulletExplosions, updateBulletExplosions } from "./Skill.js";
+import { particles, moveBloodSplash } from "./BloodParticle.js";
+import { portal, generatePortal, checkPlayerInPortal, refreshScene } from "./Portal.js";
 
-let max;
-if (window.innerWidth > window.innerHeight) {
-    max = window.innerWidth / 30;
-}
-else {
-    max = window.innerHeight / 30;
-}
-export const maxObstacles = max; // 障碍物的最大数量
-export const maxMonsters = 5;
-let monsterwave = 0;
-let isPause = false; // 是否暂停游戏
-let isHelp = false; // 是否打开帮助界面
-let isBlock1 = false;
-let isBlock2 = false;
-const maxSpeedItem = 1;
-const maxShieldItem = 1;
+import { HeadTips, headTips } from "./Tips.js";
 
-window.addEventListener("resize", () => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-});
+let fps = 60; // 目标帧率
+let interval = 1000 / fps; // 每帧的时间间隔
+let then = Date.now(); // 上一帧的时间戳
 
-// 玩家准备蓄力射箭
-canvas.addEventListener("mousedown", (event) => {
-    if (player.attackCooldown != 0 || 
-        player.isCloseAttack || 
-        player.health <= 0 || 
-        event.button != 0 || // 鼠标右键不触发射箭
-        isHelp || isPause) {
-        return;
-    }
-    else {
-        // 挥刀与射箭不共存
-        player.isCloseAttack = false;
-        player.isShootArrow = true;
-        player.attackCooldown++;
-    }
-    if (event.clientX - player.x < 0) {
-        player.direction = "a";
-    }
-    else {
-        player.direction = "d";
-    }
-});
+// 鼠标左键按下玩家准备蓄力射箭
+canvas.addEventListener("mousedown", handleMouseDown);
 
 // 玩家蓄力状态下方向跟随鼠标
-canvas.addEventListener("mousemove", (event) => {
-    if (!player.isShootArrow || isHelp || isPause) {
-        return;
-    }
-    if (event.clientX - player.x < 0) {
-        player.direction = "a";
-    }
-    else {
-        player.direction = "d";
-    }
-});
+canvas.addEventListener("mousemove", handleMouseMove);
 
-// 松开按键时射箭
-canvas.addEventListener("mouseup", (event) => {
-    if (!player.isShootArrow || 
-        player.health <= 0 || 
-        event.button != 0 || // 鼠标左键松开触发射箭
-        player.isCloseAttack || 
-        isHelp || isPause) {
-        return;
-    }
-    player.shootArrow(event.clientX, event.clientY);
-    player.isShootArrow = false;
-    // 蓄满力后下次蓄力无需等待
-    if (player.attackCooldown >= 60) {
-        player.attackCooldown = 0;
-    }
-});
+// 鼠标左键松开时射箭
+canvas.addEventListener("mouseup", handleMouseUp);
 
-// 玩家近战攻击
+// 鼠标右键玩家近战攻击
 canvas.addEventListener("contextmenu", (event) => {
     event.preventDefault();
-    // 攻击冷却时间
-    if (player.attackCooldown != 0 || 
-        player.health <= 0 || 
-        player.isShootArrow || 
-        isPause || isHelp) {
-        return;
-    }
-    // 两种攻击方式不共存
-    else {
-        player.isCloseAttack = true;
-        player.isShootArrow = false;
-        player.attackCooldown++;
-    }
-    //确保玩家的方向与鼠标点击的大致方向相同，每个方向为90度
-    if (Math.abs(event.clientY - player.y) - Math.abs(event.clientX - player.x) > 0) {
-        if (event.clientY - player.y < 0) {
-            player.direction = "w";
-        }
-        else {
-            player.direction = "s";
-        }
-    }
-    else {
-        if (event.clientX - player.x < 0) {
-            player.direction = "a";
-        }
-        else {
-            player.direction = "d";
-        }
-    }
-
-    for (let i = 0; i < monsters.length; i++) {
-        let dx = monsters[i].x - player.x;
-        let dy = monsters[i].y - player.y;
-        let distance = Math.sqrt(dx * dx + dy * dy);
-        // 以鼠标点击方向为中心的160度扇形为近战攻击判定范围
-        if (distance < monsters[i].radius + player.radius + player.closeAttackDistance) {
-            let center = (event.clientX - player.x) / Math.sqrt((event.clientX - player.x) * (event.clientX - player.x) + (event.clientY - player.y) * (event.clientY - player.y));
-            let centerAngle = Math.acos(center) * (180 / Math.PI);
-            let monsterAngle = Math.acos(dx / distance) * (180 / Math.PI);
-            let minAngle = centerAngle - 80;
-            let maxAngle = centerAngle + 80;
-            if (minAngle < 0) {
-                if (monsterAngle >= 360 + minAngle) {
-                    minAngle += 360;
-                }
-                else {
-                    minAngle = 0;
-                }
-            }
-            if (maxAngle > 360) {
-                if (monsterAngle <= maxAngle - 360) {
-                    monsterAngle += 360;
-                }
-                else {
-                    maxAngle = 360;
-                }
-            }
-            if (monsterAngle >= minAngle && monsterAngle <= maxAngle) {
-                generateBloodSplash(monsters[i].x, monsters[i].y);
-                // 打断攻击
-                if (monsters[i].attackCooldown <= 0) {
-                    monsters[i].attackCooldown = monsters[i].attackCooldownTime;
-                }
-                monsters[i].knockback(player.knockbackDistance, dx / distance, dy / distance);
-                monsters[i].health -= player.damage;
-                if (monsters[i].health <= 0) {
-                    player.score += monsters[i].score; // 增加玩家得分
-                    monsters.splice(i, 1); // 移除生命值为 0 的怪物
-                    i--;
-                }
-            }
-        }
-    }
-    for (let i = 0; i < rangedMonsters.length; i++) {
-        let dx = rangedMonsters[i].x - player.x;
-        let dy = rangedMonsters[i].y - player.y;
-        let distance = Math.sqrt(dx * dx + dy * dy);
-        if (distance < rangedMonsters[i].radius + player.radius + player.closeAttackDistance) {
-            let center = (event.clientX - player.x) / Math.sqrt((event.clientX - player.x) * (event.clientX - player.x) + (event.clientY - player.y) * (event.clientY - player.y));
-            let centerAngle = Math.acos(center) * (180 / Math.PI);
-            let monsterAngle = Math.acos(dx / distance) * (180 / Math.PI);
-            let minAngle = centerAngle - 80;
-            let maxAngle = centerAngle + 80;
-            if (minAngle < 0) {
-                if (monsterAngle >= 360 + minAngle) {
-                    minAngle += 360;
-                }
-                else {
-                    minAngle = 0;
-                }
-            }
-            if (maxAngle > 360) {
-                if (monsterAngle <= maxAngle - 360) {
-                    monsterAngle += 360;
-                }
-                else {
-                    maxAngle = 360;
-                }
-            }
-            if (monsterAngle >= minAngle && monsterAngle <= maxAngle) {
-                generateBloodSplash(rangedMonsters[i].x, rangedMonsters[i].y);
-                // 打断攻击
-                if (rangedMonsters[i].attackCooldown <= 0) {
-                    rangedMonsters[i].attackCooldown = rangedMonsters[i].attackCooldownTime;
-                }
-                rangedMonsters[i].knockback(player.knockbackDistance, dx / distance, dy / distance);
-                rangedMonsters[i].health -= player.damage;
-                if (rangedMonsters[i].health <= 0) {
-                    player.score += rangedMonsters[i].score; // 增加玩家得分
-                    rangedMonsters.splice(i, 1); // 移除生命值为 0 的怪物
-                    i--;
-                }
-            }
-        }
-    }
-    for (let i = 0; i < bombers.length; i++) {
-        if (bombers[i].isDead || bombers[i].health <= 0) {
-            bombers.splice(i, 1);
-            i--;
-            continue;
-        }
-        let dx = bombers[i].x - player.x;
-        let dy = bombers[i].y - player.y;
-        let distance = Math.sqrt(dx * dx + dy * dy);
-        if (distance < bombers[i].radius + player.radius + player.closeAttackDistance) {
-            let center = (event.clientX - player.x) / Math.sqrt((event.clientX - player.x) * (event.clientX - player.x) + (event.clientY - player.y) * (event.clientY - player.y));
-            let centerAngle = Math.acos(center) * (180 / Math.PI);
-            let monsterAngle = Math.acos(dx / distance) * (180 / Math.PI);
-            let minAngle = centerAngle - 80;
-            let maxAngle = centerAngle + 80;
-            if (minAngle < 0) {
-                if (monsterAngle >= 360 + minAngle) {
-                    minAngle += 360;
-                }
-                else {
-                    minAngle = 0;
-                }
-            }
-            if (maxAngle > 360) {
-                if (monsterAngle <= maxAngle - 360) {
-                    monsterAngle += 360;
-                }
-                else {
-                    maxAngle = 360;
-                }
-            }
-            if (monsterAngle >= minAngle && monsterAngle <= maxAngle) {
-                generateBloodSplash(bombers[i].x, bombers[i].y);
-                bombers[i].knockback(player.knockbackDistance, dx / distance, dy / distance);
-                bombers[i].health -= player.damage;
-                if (bombers[i].health <= 0) {
-                    player.score += bombers[i].score; // 增加玩家得分
-                    bombers.splice(i, 1); // 移除生命值为 0 的怪物
-                    i--;
-                }
-            }
-        }
-    }
-});
+    handleRightClick(event);
+})
 
 document.addEventListener("keydown", handleKeyDown);
 document.addEventListener("keyup", handleKeyUp);
-let keyState = {}; // 存储按下的键的信息
-
-// 确定玩家移动方向和暂停功能实现，按下按键即改变玩家的方向
-function handleKeyDown(event) {
-    if (player.health <= 0 || isHelp || isPause && event.key != " ") {
-        return;
-    }
-    keyState[event.key] = true;
-    switch (event.key) {
-        // 往上走
-        case "w":
-        case "W":
-            // 特殊状态下不能改变方向
-            if (!player.isCloseAttack && !player.isShootArrow) {
-                player.direction = "w";
-            }
-            break;
-        // 往下走
-        case "s":
-        case "S":
-            if (!player.isCloseAttack && !player.isShootArrow) {
-                player.direction = "s";
-            }
-            break;
-        // 往左走
-        case "a":
-        case "A":
-            if (!player.isCloseAttack && !player.isShootArrow) {
-                player.direction = "a";
-            }
-            break;
-        // 往右走
-        case "d":
-        case "D":
-            if (!player.isCloseAttack && !player.isShootArrow) {
-                player.direction = "d";
-            }
-            break;
-        // 按下空格键暂停游戏
-        case " ": 
-            if (!isHelp) {
-                isPause = !isPause;
-            }
-            else {
-                return;
-            }
-            break;
-    }
-}
-
-// 按键松开时停止玩家某方向的移动
-function handleKeyUp(event) {
-    keyState[event.key] = false;
-    switch (event.key) {
-        case "w":
-        case "W":
-        case "s":
-        case "S":
-            player.vy = 0; // 停止垂直移动
-            if (!player.isCloseAttack && !player.isShootArrow) {
-                if (player.vx > 0) {
-                    player.direction = "d";
-                }
-                else if (player.vx < 0) {
-                    player.direction = "a";
-                }
-            }
-            break;
-        case "a":
-        case "A":
-        case "d":
-        case "D":
-            player.vx = 0; // 停止水平移动
-            if (!player.isCloseAttack && !player.isShootArrow) {
-                if (player.vy > 0) {
-                    player.direction = "s";
-                }
-                else if (player.vy < 0) {
-                    player.direction = "w";
-                }
-            }
-            break;
-    }
-}
-
-// 更新玩家速度状态
-function updatePlayerSpeed() {
-    if (player.health <= 0) {
-        return;
-    }
-    let speed = player.speed;
-    if (player.isShootArrow) {
-        speed = player.shootingSpeed;
-    }
-    if (keyState["w"] || keyState["W"]) {
-        // 走斜线
-        if (Math.abs(player.vx) != 0) {
-            player.vx = (player.vx / Math.abs(player.vx)) * speed / Math.sqrt(2);
-            player.vy = -speed / Math.sqrt(2);
-        }
-        else {
-            player.vx = 0;
-            // 回头看效果
-            if (player.vy != speed) {
-                player.vy = -speed;
-            }
-        }
-    }
-    if (keyState["s"] || keyState["S"]) {
-        // 走斜线
-        if (Math.abs(player.vx) != 0) {
-            player.vx = (player.vx / Math.abs(player.vx)) * speed / Math.sqrt(2);
-            player.vy = speed / Math.sqrt(2);
-        }
-        else {
-            player.vx = 0;
-            // 回头看效果
-            if (player.vy != -speed) {
-                player.vy = speed;
-            }
-        }
-    }
-    if (keyState["a"] || keyState["A"]) {
-        // 走斜线
-        if (Math.abs(player.vy) != 0) {
-            player.vx = -speed / Math.sqrt(2);
-            player.vy = (player.vy / Math.abs(player.vy)) * speed / Math.sqrt(2);
-        }
-        else {
-            // 回头看效果
-            if (player.vx != speed) {
-                player.vx = -speed;
-            }
-            player.vy = 0;
-        }
-    }
-    if (keyState["d"] || keyState["D"]) {
-        // 走斜线
-        if (Math.abs(player.vy) != 0) {
-            player.vx = speed / Math.sqrt(2);
-            player.vy = (player.vy / Math.abs(player.vy)) * speed / Math.sqrt(2);
-        }
-        else {
-            // 回头看效果
-            if (player.vx != -speed) {
-                player.vx = speed;
-            }
-            player.vy = 0;
-        }
-    }
-}
-
-// 处理子弹的移动
-function moveBullets() {
-    for (let i = 0; i < bullets.length; i++) {
-        bullets[i].move();
-
-        if (
-            bullets[i].x < 0 ||
-            bullets[i].x > canvas.width ||
-            bullets[i].y < 0 ||
-            bullets[i].y > canvas.height
-        ) {
-            bullets.splice(i, 1); // 移除超出画布的子弹
-            i--;
-            continue;
-        }
-
-        for (let j = 0; j < obstacles.length; j++) {
-            let dx = bullets[i].x - obstacles[j].x;
-            let dy = bullets[i].y - obstacles[j].y;
-            let distance = Math.sqrt(dx * dx + dy * dy);
-
-            if (distance < bullets[i].radius + obstacles[j].radius) {
-                bullets.splice(i, 1); // 移除击中的子弹
-                i--;
-                break;
-            }
-        }
-    }
-}
-
-export function generateBloodSplash(x, y) {
-    for (let i = 0; i < 50; i++) {
-        const radius = Math.random() * 5 + 2;
-        const particle = new BloodParticle(x, y, radius, canvas);
-        particles.push(particle);
-    }
-}
-
-function moveBloodSplash() {
-    for (let i = 0; i < particles.length; i++) {
-        particles[i].update();
-        if (particles[i].alpha <= 0) {
-            particles.splice(i, 1);
-            i--;
-        }
-    }
-}
-
-// 掉落物生成
-function generateDropLoot(x, y) {
-    const dropChance = Math.random();
-    if (dropChance < 0.6) {
-        dropLoots.push(new DropLoot(x, y, canvas));
-    }
-}
-
-// 拾取掉落物
-function getDropLoot() {
-    for (let i = 0; i < dropLoots.length; i++) {
-        const dx2 = player.x - dropLoots[i].x;
-        const dy2 = player.y - dropLoots[i].y;
-        const distance2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
-
-        if (distance2 < player.radius + dropLoots[i].radius) {
-            player.health += 10;
-            if (player.health > player.currentHealth) {
-                player.health = player.health - (player.health - player.currentHealth);
-            }
-            dropLoots.splice(i, 1);
-            i--;
-        }
-    }
-}
-
-// 生成道具
-function generateItem() {
-    if (speedItems.length == 0) {
-        for (let i = 0; i < maxSpeedItem; i++) {
-            const x = Math.random() * canvas.width;
-            const y = Math.random() * canvas.height;
-            if (Math.abs(x - player.x) < 100 && Math.abs(y - player.y) < 100) {
-                i--;
-                continue; // 让道具不太靠近人物
-            }
-            if (x < SpeedItem.radius || x > canvas.width - SpeedItem.radius || y < SpeedItem.radius || y > canvas.height - SpeedItem.radius) {
-                i--;
-                continue; // 保证道具不生成在画布外
-            }
-            for (let j = 0; j < obstacles.length; j++) {
-                const dx = x - obstacles[j].x;
-                const dy = y - obstacles[j].y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                if (distance < SpeedItem.radius + Obstacle.radius) {
-                    isBlock1 = true;
-                    break;
-                }
-            }
-            if (!isBlock1) {
-                speedItems.push(new SpeedItem(x, y, canvas));
-            }
-        }
-    }
-}
-
-function generateShieldItem() {
-    if (shieldItems.length == 0) {
-        for (let j = 0; j < maxShieldItem; j++) {
-            const x = Math.random() * canvas.width;
-            const y = Math.random() * canvas.height;
-            if (Math.abs(x - player.x) < 100 && Math.abs(y - player.y) < 100) {
-                j--;
-                continue;
-            }
-            if (x < ShieldsItem.radius || x > canvas.width - ShieldsItem.radius || y < ShieldsItem.radius || y > canvas.height - ShieldsItem.radius) {
-                j--;
-                continue;
-            }
-            for (let i = 0; i < obstacles.length; i++) {
-                const dx = x - obstacles[i].x;
-                const dy = y - obstacles[i].y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                if (distance < SpeedItem.radius + Obstacle.radius) {
-                    isBlock2 = true;
-                    break;
-                }
-            }
-            if (!isBlock2) {
-                shieldItems.push(new ShieldsItem(x, y, canvas));
-            }
-        }
-    }
-}
-
-// 拾取道具
-function collectItem() {
-    for (let i = 0; i < speedItems.length; i++) {
-        const dx = player.x - speedItems[i].x;
-        const dy = player.y - speedItems[i].y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-
-        if (distance < player.radius + speedItems[i].radius) {
-            // 人物和道具碰撞
-            speedItems.splice(i, 1); // 移除道具
-            if (!SpeedItem.isAmplified) {
-                SpeedItem.isAmplified = true;
-                SpeedItem.duration = 10;
-                player.speed += 3;
-                const timer2 = setInterval(function () {
-                    SpeedItem.duration--;
-                    if (SpeedItem.duration <= 0) {
-                        clearInterval(timer2);
-                        SpeedItem.isAmplified = false;
-                        player.speed = 5;
-                    }
-                }, 1000);
-            }
-        }
-    }
-    for (let j = 0; j < shieldItems.length; j++) {
-        const dx2 = player.x - shieldItems[j].x;
-        const dy2 = player.y - shieldItems[j].y;
-        const distance2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
-
-        if (distance2 < player.radius + shieldItems[j].radius) {
-            if (player.shield < 100) {
-                player.shield += 20;
-                if (player.shield > 100) {
-                    player.shield = player.shield - (player.shield - 100);
-                }
-                shieldItems.splice(j, 1);
-            }
-        }
-    }
-}
-
-// 生成障碍物
-function generateObstacles() {
-    if (obstacles.length == 0) {
-        for (let i = 0; i < maxObstacles; i++) {
-            let x = Math.random() * canvas.width;
-            let y = Math.random() * canvas.height;
-            let type = Math.random() * 100;
-            if (type < 30) {
-                type = 1;
-            }
-            else if (type < 85) {
-                type = 2;
-            }
-            else {
-                type = 3;
-            }
-
-            let radius;
-            if (type == 1) {
-                radius = 18;
-            }
-            else if (type == 2) {
-                radius = 24;
-            }
-            else {
-                radius = 36;
-            }
-
-            if (radius == 18) {
-                let random = Math.random() * 100;
-                if (random < 50) {
-                    type = 1;
-                }
-                else {
-                    type = 2;
-                }
-            }
-            else if (radius == 36) {
-                let random = Math.random() * 100;
-                if (random < 50) {
-                    type = 0;
-                }
-                else {
-                    type = 1;
-                }
-            }
-            else {
-                let random = Math.random() * 100;
-                if (random < 50) {
-                    type = 3;
-                }
-                else {
-                    type = 4;
-                }
-            }
-
-
-            let isOverlapping = false;
-            for (const obstacle of obstacles) {
-                const distance = Math.sqrt((x - obstacle.x) ** 2 + (y - obstacle.y) ** 2);
-                if (distance < radius + obstacle.radius + 20) {
-                    isOverlapping = true;
-                    break;
-                }
-            }
-
-            if (isOverlapping) {
-                i--;
-                continue;
-            }
-
-            obstacles.push(new Obstacle(x, y, radius, type, canvas));
-        }
-        // 按照障碍物的y坐标，避免遮挡
-        for (let i = 0; i < obstacles.length - 1; i++) {
-            for (let j = 0; j < obstacles.length - 1 - i; j++) {
-                if (obstacles[j].y > obstacles[j + 1].y) {
-                    let temp = obstacles[j];
-                    obstacles[j] = obstacles[j + 1];
-                    obstacles[j + 1] = temp;
-                }
-            }
-        }
-    }
-}
-
-function generateGrass() {
-    if (littlePlants.length == 0) {
-        let count;
-        if (canvas.width < canvas.height) {
-            count = canvas.height / 20;
-        }
-        else {
-            count = canvas.width / 20;
-        }
-        for (let i = 0; i < count; i++) {
-            let x = Math.random() * canvas.width;
-            let y = Math.random() * canvas.height;
-            if (x < 10 || x > canvas.width - 10 || y < 10 || y > canvas.height - 10) {
-                i--;
-                continue;
-            }
-            let type = Math.floor(Math.random() * 7);
-            littlePlants.push(new LittlePlant(x, y, type, canvas));
-        }
-    }
-
-}
 
 // 生成怪物
 function generateMonsters() {
     if (monsters.length == 0 && rangedMonsters.length == 0) {
-        monsterwave++;
+        //monsterWave++;
+        setMonsterWave(monsterWave + 1);
         let pursuitPlayerDistance;
         if (canvas.width < canvas.height) {
             pursuitPlayerDistance = canvas.width / 2;
@@ -750,199 +83,35 @@ function generateMonsters() {
                 continue;
             }
 
-            for (let j = 0; j < obstacles.length; j++) {
-                let dx = x - obstacles[j].x;
-                let dy = y - obstacles[j].y;
-                let distance = Math.sqrt(dx * dx + dy * dy);
-                if (distance < monsters.radius + obstacles[j].radius) {
-                    if (dx < 0) {
-                        x -= obstacles[j].radius;
-                    }
-                    else {
-                        x += obstacles[j].radius;
-                    }
-                    if (dy < 0) {
-                        y -= obstacles[j].radius;
-                    }
-                    else {
-                        y += obstacles[j].radius;
-                    }
-                }
-            }
-
             if (type < 40) {
-                monsters.push(new Monster(x, y, pursuitPlayerDistance, canvas));
+                generateMonster(x, y, pursuitPlayerDistance)
             }
             else if (type < 80) {
-                rangedMonsters.push(new RangedMonster(x, y, pursuitPlayerDistance * 1.5, canvas));
+                generateRangedMonster(x, y, pursuitPlayerDistance);
             }
             else {
-                bombers.push(new Bomber(x, y, pursuitPlayerDistance, canvas));
+                generateBomber(x, y, pursuitPlayerDistance);
             }
         }
     }
 }
 
-// 处理怪物的移动
-function moveMonsters() {
-    for (let i = 0; i < monsters.length; i++) {
-        monsters[i].move();
-    }
+function updateScene() {
+    updateBomberExplosions();
+    updateBulletExplosions();
+    bombers.forEach((bomber) => bomber.move());
+    monsters.forEach((monster) => monster.move());
+    rangedMonsters.forEach((rangedMonster) => rangedMonster.move());
+    moveBullets();
+    moveBloodSplash();
+    moveMonsterBullets();
+    moveStrengthenedBullets();
 }
 
-// 处理远程怪物的移动
-function moveRangedMonsters() {
-    for (let i = 0; i < rangedMonsters.length; i++) {
-        rangedMonsters[i].move();
-    }
-}
-
-// 处理炸弹人的移动
-function moveBombers() {
-    for (let i = 0; i < bombers.length; i++) {
-        bombers[i].move();
-    }
-}
-
-// 炸弹特效
-function updateBomberExplosions() {
-    for (let i = 0; i < bomberExplosions.length; i++) {
-        bomberExplosions[i].update();
-        if (bomberExplosions[i].opacity <= 0) {
-            bomberExplosions.splice(i, 1);
-            i--;
-        }
-    }
-}
-
-// 处理怪物子弹的移动
-function moveMonsterBullets() {
-    for (let i = 0; i < monsterBullets.length; i++) {
-        monsterBullets[i].move();
-
-        if (
-            monsterBullets[i].x < 0 ||
-            monsterBullets[i].x > canvas.width ||
-            monsterBullets[i].y < 0 ||
-            monsterBullets[i].y > canvas.height
-        ) {
-            monsterBullets.splice(i, 1); // 移除超出画布的子弹
-            i--;
-            continue;
-        }
-
-        for (let j = 0; j < obstacles.length; j++) {
-            let dx = monsterBullets[i].x - obstacles[j].x;
-            let dy = monsterBullets[i].y - obstacles[j].y;
-            let distance = Math.sqrt(dx * dx + dy * dy);
-
-            if (distance < monsterBullets[i].radius + obstacles[j].radius) {
-                monsterBullets.splice(i, 1); // 移除击中的子弹
-                i--;
-                break;
-            }
-        }
-    }
-}
-
-// 检查子弹和怪物的碰撞
-function checkBulletMonsterCollision() {
-    for (let i = 0; i < bullets.length; i++) {
-        let killed = false; // 记录子弹是否击中怪物
-        for (let j = 0; j < monsters.length; j++) {
-            let dx = bullets[i].x - monsters[j].x;
-            let dy = bullets[i].y - monsters[j].y;
-            let distance = Math.sqrt(dx * dx + dy * dy);
-
-            if (distance < bullets[i].radius + monsters[j].radius) {
-                monsters[j].damageByBullet(bullets[i]);
-                if (monsters[j].health <= 0) {
-                    player.score += monsters[j].score; // 增加玩家得分
-                    generateDropLoot(monsters[j].x, monsters[j].y);
-                    monsters.splice(j, 1); // 移除生命值为 0 的怪物
-                }
-                bullets.splice(i, 1); // 移除击中的子弹
-                i--;
-                killed = true;
-                break;
-            }
-        }
-        // 子弹击中怪物后，不再检查子弹和其他怪物的碰撞
-        if (killed) {
-            break;
-        }
-        for (let j = 0; j < rangedMonsters.length; j++) {
-            let dx = bullets[i].x - rangedMonsters[j].x;
-            let dy = bullets[i].y - rangedMonsters[j].y;
-            let distance = Math.sqrt(dx * dx + dy * dy);
-
-            if (distance < bullets[i].radius + rangedMonsters[j].radius) {
-                rangedMonsters[j].damageByBullet(bullets[i]);
-                if (rangedMonsters[j].health <= 0) {
-                    player.score += rangedMonsters[j].score; // 增加玩家得分
-                    generateDropLoot(rangedMonsters[j].x, rangedMonsters[j].y);
-                    rangedMonsters.splice(j, 1); // 移除生命值为 0 的怪物
-                }
-                bullets.splice(i, 1); // 移除击中的子弹
-                i--;
-                killed = true;
-                break;
-            }
-        }
-        if (killed) {
-            break;
-        }
-        // 检查子弹是否击中炸弹人
-        for (let j = 0; j < bombers.length; j++) {
-            if (bombers[j].isDead || bombers[j].health <= 0) {
-                bombers.splice(j, 1);
-                j--;
-                continue;
-            }
-            let dx = bullets[i].x - bombers[j].x;
-            let dy = bullets[i].y - bombers[j].y;
-            let distance = Math.sqrt(dx * dx + dy * dy);
-
-            if (distance < bullets[i].radius + bombers[j].radius) {
-                bombers[j].damageByBullet(bullets[i]);
-                if (bombers[j].health <= 0) {
-                    player.score += bombers[j].score; // 增加玩家得分
-                    generateDropLoot(bombers[j].x, bombers[j].y);
-                    bombers.splice(j, 1); // 移除生命值为 0 的怪物
-                }
-                bullets.splice(i, 1); // 移除击中的子弹
-                i--;
-                killed = true;
-                break;
-            }
-        }
-        if (killed) {
-            break;
-        }
-    }
-}
-
-
-
-// 检查怪物子弹和玩家的碰撞
-function checkMonsterBulletPlayerCollision() {
-    if (player.health <= 0) {
-        player.health = 0;
-        return;
-    }
-    for (let i = 0; i < monsterBullets.length; i++) {
-        let dx = monsterBullets[i].x - player.x;
-        let dy = monsterBullets[i].y - player.y;
-        let distance = Math.sqrt(dx * dx + dy * dy);
-
-        if (distance < monsterBullets[i].radius + player.radius) {
-            player.damageByMonsterBullet(monsterBullets[i]);
-            generateBloodSplash(player.x, player.y);
-            monsterBullets.splice(i, 1); // 移除击中的子弹
-            i--;
-            break;
-        }
-    }
+function checkDamage() {
+    checkBulletMonsterCollision();
+    checkMonsterBulletPlayerCollision()
+    checkStrengthenedBulletMonsterCollision();
 }
 
 // 绘制画面
@@ -961,15 +130,25 @@ function draw() {
     }
     shieldItems.forEach((shieldItem) => shieldItem.draw());
     speedItems.forEach((speedItem) => speedItem.draw());
+    shieldItems.forEach((shieldItem) => shieldItem.draw());
     dropLoots.forEach((dropLoot) => dropLoot.draw());
     bullets.forEach((bullet) => bullet.draw());
+    strengthenedBullets.forEach((strengthenedBullet) => strengthenedBullet.draw());
     monsters.forEach((monster) => monster.draw());
     rangedMonsters.forEach((rangedMonster) => rangedMonster.draw());
     monsterBullets.forEach((monsterBullet) => monsterBullet.draw());
     bombers.forEach((bomber) => bomber.draw());
     obstacles.forEach((obstacle) => obstacle.draw());
     bomberExplosions.forEach((bomberExplosion) => bomberExplosion.draw());
+    bulletExplosions.forEach((bulletExplosion) => bulletExplosion.draw());
     particles.forEach((particle) => particle.draw());
+    headTips.forEach((headTip) => {
+        headTip.draw();
+        if (headTip.animationFrame >= headTip.animationFrameTime) {
+            headTips.splice(0, 1);
+        }
+    });
+    player.ctx.save();
     player.ctx.fillStyle = "black";
     player.ctx.font = "20px Arial";
     player.ctx.fillText("Health: " + player.health + "/" + player.currentHealth, 10, 30);
@@ -984,6 +163,7 @@ function draw() {
         ctx.fillText("游戏已暂停", canvas.width / 2 - 100, canvas.height / 2);
         ctx.fill();
     }
+    player.ctx.restore();
 }
 
 // 游戏奖励机制
@@ -991,19 +171,23 @@ function reward() {
     for (let reward of rewards) {
         if (player.score >= reward.threshold && !player.rewardReceived[reward.type]) {
             player.receiveReward(reward.type, reward.value, reward.message);
+            headTips.push(new HeadTips(reward.message, canvas));
         }
     }
 }
 
 // 游戏循环
 function gameLoop() {
-    if (!isPause && !isHelp) {
+    // 帧数控制为60
+    const now = Date.now();
+    const delta = now - then;
+    if (!isPause && !isHelp && delta > interval) {
         updatePlayerSpeed()
         generateObstacles();
         generateGrass();
         if (player.health > 0) {
             if (portal.length != 0) {
-                if (!portal[0].isActivated){
+                if (!portal[0].isActivated) {
                     player.move();
                 }
             }
@@ -1011,21 +195,28 @@ function gameLoop() {
                 player.move();
             }
         }
-        moveBombers();
+        updateScene();
         reward();
-        moveBullets();
-        moveMonsters();
-        moveRangedMonsters();
-        moveBloodSplash();
-        moveMonsterBullets();
         collectItem();
         getDropLoot();
-        updateBomberExplosions();
-        checkBulletMonsterCollision();
-        checkMonsterBulletPlayerCollision()
+        checkDamage()
+        // if (isStart) {
+        //     const ctx = canvas.getContext("2d");
+        //     ctx.save();
+        //     ctx.fillStyle = "rgb(0, 0, 0, 0)";
+        //     ctx.fillRect(0, 0, canvas.width, canvas.height);
+        //     ctx.fillStyle = "blue";
+        //     ctx.font = "30px Arial";
+        //     ctx.fillText("玩家可通过wasd移动角色，通过鼠标左键或右键进行攻击", canvas.width / 2 - 410, canvas.height / 2 - 200);
+        //     ctx.fill();
+        //     ctx.restore();
+        //     setTimeout(() => {
+        //         isStart = false;
+        //     }, 10000);
+        // }
     }
     draw();
-    if (monsterwave % 3 == 0 && monsterwave != 0 && monsters.length == 0 && 
+    if (monsterWave % 4 == 0 && monsterWave != 0 && monsters.length == 0 &&
         rangedMonsters.length == 0 && bombers.length == 0) {
         if (portal.length == 0) {
             generatePortal();
@@ -1035,8 +226,16 @@ function gameLoop() {
             refreshScene();
         }
         if (portal.length == 0) {
-            monsterwave++;
+            //monsterWave++;
+            setMonsterWave(monsterWave + 1);
+            let count = Math.floor(monsterWave / 4 + 1);
+            headTips.push(new HeadTips("第 " + count + " 间", canvas));
         }
+    }
+    else if (monsterWave == 0) {
+        headTips.push(new HeadTips("第 1 间", canvas));
+        //monsterWave++;
+        setMonsterWave(monsterWave + 1);
     }
     if (monsters.length == 0 && rangedMonsters.length == 0 && bombers.length == 0 && portal.length == 0) {
         setTimeout(() => {
@@ -1083,6 +282,7 @@ function gameOver() {
         canvas.style.display = "block";
         // 重置游戏状态
         player.isDead = false;
+        player.currentHealth = 100;
         player.animationFrame = 0;
         player.animationFrameTime = 59;
         player.attackCooldown = 0;
@@ -1095,6 +295,7 @@ function gameOver() {
         player.x = canvas.width / 2;
         player.y = canvas.height / 2;
         bullets.length = 0;
+        strengthenedBullets.length = 0;
         Bullet.damage = 10;
         monsters.length = 0;
         rangedMonsters.length = 0;
@@ -1125,17 +326,19 @@ gameOverScreen.style.paddingTop = window.innerHeight / 1.5 + "px";
 startButton.addEventListener("click", () => {
     gameStartScreen.style.display = "none";
     canvas.style.display = "block";
+    //isStart = true;
+    setIsStart(true);
     gameLoop();
 });
 // 帮助界面
 helpButton.addEventListener("click", () => {
     helpScreen.style.display = "block";
     helpButton.style.display = "none";
-    isHelp = true;
+    setIsHelp(true);
 });
 // 关闭帮助界面
 closeButton.addEventListener("click", () => {
     helpScreen.style.display = "none";
     helpButton.style.display = "block";
-    isHelp = false;
+    setIsHelp(false);
 });
