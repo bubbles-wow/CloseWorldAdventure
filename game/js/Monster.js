@@ -26,6 +26,7 @@ export class Monster {
         this.isWander = false; // 怪物是否游荡
         this.wanderCooldown = Math.random() * 100; // 游荡冷却时间
         this.wanderCooldownTime = 300; // 游荡冷却时间阈值
+        this.isAttackedByStrengthenedBullets = false; // 是否受到爆炸箭伤害
         this.direction = "d" // 怪物朝向
         this.animationFrame = Math.random() * 59; // 动画帧
         this.animationFrameTime = 59; // 动画帧阈值
@@ -270,7 +271,7 @@ export class Monster {
 
         this.ctx.drawImage(skeletonImage, imageDirectionX, imageDirectionY, 48, 48, this.x - this.radius - 17 * 2, this.y - this.radius - 28 * 2, 48 * 2, 48 * 2);
 
-
+        this.ctx.save();
         this.ctx.beginPath();
         // 绘制生命值条
         this.ctx.fillStyle = "gray";
@@ -286,6 +287,7 @@ export class Monster {
         // this.ctx.fillStyle = "red";
         // this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         // this.ctx.fill();
+        this.ctx.restore();
     }
 }
 

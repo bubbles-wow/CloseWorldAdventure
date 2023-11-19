@@ -19,6 +19,9 @@ export class SpeedItem {
         this.ctx.save();
         this.ctx.drawImage(speedItemImage, 710, 450, 91, 220, this.x - 10, this.y - 20, 20, 40);
         this.ctx.restore();
+        this.ctx.save();
+        this.ctx.drawImage(speedItemImage, 710, 450, 91, 220, this.x - 10, this.y - 20, 20, 40);
+        this.ctx.restore();
     }
     // 避开障碍物生成
     avoidObstacles() {
@@ -52,6 +55,9 @@ export class ShieldsItem {
 
     // 绘制护盾类道具
     draw() {
+        this.ctx.save();
+        this.ctx.drawImage(shieldItemImage, 160, 0, 724, 1080, this.x - 7.24, this.y - 10.8, 14.48, 21.6);
+        this.ctx.restore();
         this.ctx.save();
         this.ctx.drawImage(shieldItemImage, 160, 0, 724, 1080, this.x - 7.24, this.y - 10.8, 14.48, 21.6);
         this.ctx.restore();

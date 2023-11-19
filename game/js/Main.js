@@ -283,6 +283,7 @@ function gameOver() {
         // 重置游戏状态
         player.isDead = false;
         player.currentHealth = 100;
+        player.currentHealth = 100;
         player.animationFrame = 0;
         player.animationFrameTime = 59;
         player.attackCooldown = 0;
@@ -295,6 +296,7 @@ function gameOver() {
         player.x = canvas.width / 2;
         player.y = canvas.height / 2;
         bullets.length = 0;
+        strengthenedBullets.length = 0;
         strengthenedBullets.length = 0;
         Bullet.damage = 10;
         monsters.length = 0;
