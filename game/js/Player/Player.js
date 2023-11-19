@@ -145,7 +145,7 @@ export class Player {
         }
         let bulletVX = (dx / length) * bulletSpeed;
         let bulletVY = (dy / length) * bulletSpeed;
-        if (!this.isOnCooldown) {
+        if (!this.isOnCooldown && !isStart) {
             strengthenedBullets.push(new StrengthenedBullet(player.x, player.y, bulletVX, bulletVY, bulletSpeed, canvas));
             this.isOnCooldown = true;
             setTimeout(() => {

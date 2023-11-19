@@ -10,7 +10,6 @@ import { Portal, generatePortal, portal, checkPlayerInPortal, refreshScene } fro
 import { generateObstacles, generateGrass } from "../Scene/Obstacle.js";
 
 import { HeadTips, headTips } from "../Particle/Tips.js";
-import { bullets } from "../Player/Bullet.js";
 
 let step = 0;
 let task = "";
