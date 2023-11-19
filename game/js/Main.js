@@ -41,6 +41,7 @@ import { StrengthenedBullet } from "./Skill.js";
 import { strengthenedBullets } from "./Skill.js";
 import { BulletExplosion } from "./Skill.js";
 import { bulletExplosions } from "./Skill.js";
+import { portal, Portal, generatePortal, checkPlayerInPortal, refreshScene } from "./Portal.js";
 
 let max;
 if (window.innerWidth > window.innerHeight) {
@@ -51,6 +52,7 @@ else {
 }
 export const maxObstacles = max; // 障碍物的最大数量
 export const maxMonsters = 5;
+let monsterwave = 0;
 let isPause = false; // 是否暂停游戏
 let isHelp = false; // 是否打开帮助界面
 let isStart = false;
@@ -81,9 +83,32 @@ canvas.addEventListener("mousedown", (event) => {
     }
 });
 
+// 玩家准备蓄力射箭
+canvas.addEventListener("mousedown", (event) => {
+    if (player.attackCooldown != 0 || 
+        player.isCloseAttack || 
+        player.health <= 0 || 
+        event.button != 0 || // 鼠标右键不触发射箭
+        isHelp || isPause) {
+        return;
+    }
+    else {
+        // 挥刀与射箭不共存
+        player.isCloseAttack = false;
+        player.isShootArrow = true;
+        player.attackCooldown++;
+    }
+    if (event.clientX - player.x < 0) {
+        player.direction = "a";
+    }
+    else {
+        player.direction = "d";
+    }
+});
+
 // 玩家蓄力状态下方向跟随鼠标
 canvas.addEventListener("mousemove", (event) => {
-    if (!player.isShootArrow) {
+    if (!player.isShootArrow || isHelp || isPause) {
         return;
     }
     if (event.clientX - player.x < 0) {
@@ -96,12 +121,15 @@ canvas.addEventListener("mousemove", (event) => {
 
 // 松开按键时射箭
 canvas.addEventListener("mouseup", (event) => {
-    if (!player.isShootArrow || player.health <= 0 || event.button != 0 || player.isCloseAttack) {
+    if (!player.isShootArrow || 
+        player.health <= 0 || 
+        event.button != 0 || // 鼠标左键松开触发射箭
+        player.isCloseAttack || 
+        isHelp || isPause) {
         return;
     }
     player.shootArrow(event.clientX, event.clientY);
     player.isShootArrow = false;
-    player.speed = 2;
     // 蓄满力后下次蓄力无需等待
     if (player.attackCooldown >= 60) {
         player.attackCooldown = 0;
@@ -112,7 +140,10 @@ canvas.addEventListener("mouseup", (event) => {
 canvas.addEventListener("contextmenu", (event) => {
     event.preventDefault();
     // 攻击冷却时间
-    if (player.attackCooldown != 0 || player.health <= 0 || player.isShootArrow) {
+    if (player.attackCooldown != 0 || 
+        player.health <= 0 || 
+        player.isShootArrow || 
+        isPause || isHelp) {
         return;
     }
     // 两种攻击方式不共存
@@ -271,106 +302,72 @@ canvas.addEventListener("contextmenu", (event) => {
 
 document.addEventListener("keydown", handleKeyDown);
 document.addEventListener("keyup", handleKeyUp);
+let keyState = {}; // 存储按下的键的信息
 
-// 处理按键按下事件
+// 确定玩家移动方向和暂停功能实现，按下按键即改变玩家的方向
 function handleKeyDown(event) {
-    if (player.health <= 0) {
+    if (player.health <= 0 || isHelp || isPause && event.key != " ") {
         return;
     }
-    let direction = player.direction;
-    let speed = player.speed;
-    if (player.isShootArrow) {
-        speed = 0.5;
-    }
+    keyState[event.key] = true;
     switch (event.key) {
+        // 往上走
         case "w":
         case "W":
-            player.vy = -speed; // 上
-            // 主要是处理走斜线的时候两个方向的速度有加成，但会感觉手感不好，卡顿
-            if (Math.abs(player.vx) == speed) {
-                player.vx /= Math.sqrt(2);
-                player.vy /= Math.sqrt(2);
+            // 特殊状态下不能改变方向
+            if (!player.isCloseAttack && !player.isShootArrow) {
+                player.direction = "w";
             }
-            // 尝试解决蓄力时减速时间不匹配的问题，好像没有用
-            else if (Math.abs(player.vx) != 0) {
-                player.vx = player.vx / Math.abs(player.vx) * speed;
-            }
-            player.direction = "w";
             break;
+        // 往下走
         case "s":
         case "S":
-            player.vy = speed; // 下
-            if (Math.abs(player.vx) == speed) {
-                player.vx /= Math.sqrt(2);
-                player.vy /= Math.sqrt(2);
+            if (!player.isCloseAttack && !player.isShootArrow) {
+                player.direction = "s";
             }
-            else if (Math.abs(player.vx) != 0) {
-                player.vx = player.vx / Math.abs(player.vx) * speed;
-            }
-            player.direction = "s";
             break;
+        // 往左走
         case "a":
         case "A":
-            player.vx = -speed; // 左
-            if (Math.abs(player.vy) == speed) {
-                player.vx /= Math.sqrt(2);
-                player.vy /= Math.sqrt(2);
+            if (!player.isCloseAttack && !player.isShootArrow) {
+                player.direction = "a";
             }
-            else if (Math.abs(player.vy) != 0) {
-                player.vy = player.vy / Math.abs(player.vy) * speed;
-            }
-            player.direction = "a"
             break;
+        // 往右走
         case "d":
         case "D":
-            player.vx = speed; // 右
-            if (Math.abs(player.vy) == speed) {
-                player.vx /= Math.sqrt(2);
-                player.vy /= Math.sqrt(2);
+            if (!player.isCloseAttack && !player.isShootArrow) {
+                player.direction = "d";
             }
-            else if (Math.abs(player.vy) != 0) {
-                player.vy = player.vy / Math.abs(player.vy) * speed;
-            }
-            player.direction = "d"
             break;
         // 按下空格键暂停游戏
-        case " ": {
+        case " ": 
             if (!isHelp) {
                 isPause = !isPause;
             }
             else {
                 return;
             }
-            if (isPause) {
-                const ctx = canvas.getContext("2d");
-                ctx.fillStyle = "rgb(0, 0, 0, 0.5)";
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = "#ffffff";
-                ctx.font = "30px Arial";
-                ctx.fillText("游戏已暂停", canvas.width / 2 - 100, canvas.height / 2);
-                ctx.fill();
-            }
-        }
             break;
-    }
-    if (player.isCloseAttack || player.isShootArrow) {
-        player.direction = direction;
     }
 }
 
-// 处理按键松开事件
+// 按键松开时停止玩家某方向的移动
 function handleKeyUp(event) {
+    keyState[event.key] = false;
     switch (event.key) {
         case "w":
         case "W":
         case "s":
         case "S":
             player.vy = 0; // 停止垂直移动
-            if (player.vx > 0) {
-                player.direction = "d";
-            }
-            else if (player.vx < 0) {
-                player.direction = "a";
+            if (!player.isCloseAttack && !player.isShootArrow) {
+                if (player.vx > 0) {
+                    player.direction = "d";
+                }
+                else if (player.vx < 0) {
+                    player.direction = "a";
+                }
             }
             break;
         case "a":
@@ -378,13 +375,82 @@ function handleKeyUp(event) {
         case "d":
         case "D":
             player.vx = 0; // 停止水平移动
-            if (player.vy > 0) {
-                player.direction = "s";
-            }
-            else if (player.vy < 0) {
-                player.direction = "w";
+            if (!player.isCloseAttack && !player.isShootArrow) {
+                if (player.vy > 0) {
+                    player.direction = "s";
+                }
+                else if (player.vy < 0) {
+                    player.direction = "w";
+                }
             }
             break;
+    }
+}
+
+// 更新玩家速度状态
+function updatePlayerSpeed() {
+    if (player.health <= 0) {
+        return;
+    }
+    let speed = player.speed;
+    if (player.isShootArrow) {
+        speed = player.shootingSpeed;
+    }
+    if (keyState["w"] || keyState["W"]) {
+        // 走斜线
+        if (Math.abs(player.vx) != 0) {
+            player.vx = (player.vx / Math.abs(player.vx)) * speed / Math.sqrt(2);
+            player.vy = -speed / Math.sqrt(2);
+        }
+        else {
+            player.vx = 0;
+            // 回头看效果
+            if (player.vy != speed) {
+                player.vy = -speed;
+            }
+        }
+    }
+    if (keyState["s"] || keyState["S"]) {
+        // 走斜线
+        if (Math.abs(player.vx) != 0) {
+            player.vx = (player.vx / Math.abs(player.vx)) * speed / Math.sqrt(2);
+            player.vy = speed / Math.sqrt(2);
+        }
+        else {
+            player.vx = 0;
+            // 回头看效果
+            if (player.vy != -speed) {
+                player.vy = speed;
+            }
+        }
+    }
+    if (keyState["a"] || keyState["A"]) {
+        // 走斜线
+        if (Math.abs(player.vy) != 0) {
+            player.vx = -speed / Math.sqrt(2);
+            player.vy = (player.vy / Math.abs(player.vy)) * speed / Math.sqrt(2);
+        }
+        else {
+            // 回头看效果
+            if (player.vx != speed) {
+                player.vx = -speed;
+            }
+            player.vy = 0;
+        }
+    }
+    if (keyState["d"] || keyState["D"]) {
+        // 走斜线
+        if (Math.abs(player.vy) != 0) {
+            player.vx = speed / Math.sqrt(2);
+            player.vy = (player.vy / Math.abs(player.vy)) * speed / Math.sqrt(2);
+        }
+        else {
+            // 回头看效果
+            if (player.vx != -speed) {
+                player.vx = speed;
+            }
+            player.vy = 0;
+        }
     }
 }
 
@@ -741,6 +807,7 @@ function generateGrass() {
 // 生成怪物
 function generateMonsters() {
     if (monsters.length == 0 && rangedMonsters.length == 0) {
+        monsterwave++;
         let pursuitPlayerDistance;
         if (canvas.width < canvas.height) {
             pursuitPlayerDistance = canvas.width / 2;
@@ -807,27 +874,21 @@ function generateMonsters() {
 // 处理怪物的移动
 function moveMonsters() {
     for (let i = 0; i < monsters.length; i++) {
-        monsters[i].move(player, obstacles);
-        if (monsters[i].attackCooldown > 0) {
-            monsters[i].attackCooldown -= 16; // 每帧减少冷却时间
-        }
+        monsters[i].move();
     }
 }
 
 // 处理远程怪物的移动
 function moveRangedMonsters() {
     for (let i = 0; i < rangedMonsters.length; i++) {
-        rangedMonsters[i].move(player, obstacles, monsterBullets);
-        if (rangedMonsters[i].attackCooldown > 0) {
-            rangedMonsters[i].attackCooldown -= 16; // 每帧减少冷却时间
-        }
+        rangedMonsters[i].move();
     }
 }
 
 // 处理炸弹人的移动
 function moveBombers() {
     for (let i = 0; i < bombers.length; i++) {
-        bombers[i].move(player, obstacles, bomberExplosions);
+        bombers[i].move();
     }
 }
 
@@ -1083,6 +1144,10 @@ function checkStrengthenedBulletMonsterCollision() {
 
 // 检查怪物子弹和玩家的碰撞
 function checkMonsterBulletPlayerCollision() {
+    if (player.health <= 0) {
+        player.health = 0;
+        return;
+    }
     for (let i = 0; i < monsterBullets.length; i++) {
         let dx = monsterBullets[i].x - player.x;
         let dy = monsterBullets[i].y - player.y;
@@ -1102,8 +1167,17 @@ function checkMonsterBulletPlayerCollision() {
 function draw() {
     player.ctx.imageSmoothingEnabled = false;
     player.ctx.clearRect(0, 0, player.canvas.width, player.canvas.height);
-    littlePlants.forEach((littlePlant) => littlePlant.draw());
+    if (portal.length != 0 && !portal[0].isActivated || portal.length == 0) {
+        littlePlants.forEach((littlePlant) => littlePlant.draw());
+    }
+    if (portal.length != 0) {
+        portal[0].draw();
+    }
     player.draw();
+    if (portal.length != 0 && portal[0].isActivated) {
+        return;
+    }
+    shieldItems.forEach((shieldItem) => shieldItem.draw());
     speedItems.forEach((speedItem) => speedItem.draw());
     shieldItems.forEach((shieldItem) => shieldItem.draw());
     dropLoots.forEach((dropLoot) => dropLoot.draw());
@@ -1122,6 +1196,15 @@ function draw() {
     player.ctx.fillText("Health: " + player.health + "/" + player.currentHealth, 10, 30);
     player.ctx.fillText("Shield: " + player.shield, 10, 60);
     player.ctx.fillText("Score: " + player.score, 10, 90);
+    if (isPause) {
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "rgb(0, 0, 0, 0.5)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "30px Arial";
+        ctx.fillText("游戏已暂停", canvas.width / 2 - 100, canvas.height / 2);
+        ctx.fill();
+    }
 }
 
 // 游戏奖励机制
@@ -1136,13 +1219,19 @@ function reward() {
 // 游戏循环
 function gameLoop() {
     if (!isPause && !isHelp) {
+        updatePlayerSpeed()
         generateObstacles();
         generateGrass();
         if (player.health > 0) {
-            player.move();
+            if (portal.length != 0) {
+                if (!portal[0].isActivated){
+                    player.move();
+                }
+            }
+            else {
+                player.move();
+            }
         }
-        checkStrengthenedBulletMonsterCollision();
-        updateBulletExplosions();
         moveBombers();
         reward();
         moveBullets();
@@ -1156,6 +1245,8 @@ function gameLoop() {
         updateBomberExplosions();
         checkBulletMonsterCollision();
         checkMonsterBulletPlayerCollision()
+        checkStrengthenedBulletMonsterCollision();
+        updateBulletExplosions();
         draw();
         if (isStart) {
             const ctx = canvas.getContext("2d");
@@ -1170,7 +1261,21 @@ function gameLoop() {
             }, 10000);
         }
     }
-    if (monsters.length == 0 && rangedMonsters.length == 0 && bombers.length == 0) {
+    draw();
+    if (monsterwave % 3 == 0 && monsterwave != 0 && monsters.length == 0 && 
+        rangedMonsters.length == 0 && bombers.length == 0) {
+        if (portal.length == 0) {
+            generatePortal();
+        }
+        checkPlayerInPortal();
+        if (portal[0].isActivated) {
+            refreshScene();
+        }
+        if (portal.length == 0) {
+            monsterwave++;
+        }
+    }
+    if (monsters.length == 0 && rangedMonsters.length == 0 && bombers.length == 0 && portal.length == 0) {
         setTimeout(() => {
             generateMonsters();
         }, 5000);
