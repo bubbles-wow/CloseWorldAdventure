@@ -22,12 +22,14 @@ export class BloodParticle {
 
     // 渲染粒子
     draw() {
+        this.ctx.save();
         this.ctx.globalAlpha = this.alpha;
         this.ctx.fillStyle = "red";
         this.ctx.beginPath();
         this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         this.ctx.fill();
         this.ctx.globalAlpha = 1;
+        this.ctx.restore();
     }
 }
 

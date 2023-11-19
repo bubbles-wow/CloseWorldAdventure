@@ -43,6 +43,8 @@ import { BulletExplosion } from "./Skill.js";
 import { bulletExplosions } from "./Skill.js";
 import { portal, Portal, generatePortal, checkPlayerInPortal, refreshScene } from "./Portal.js";
 
+import { HeadTips, headTips } from "./Tips.js";
+
 let max;
 if (window.innerWidth > window.innerHeight) {
     max = window.innerWidth / 30;
@@ -52,7 +54,6 @@ else {
 }
 export const maxObstacles = max; // 障碍物的最大数量
 export const maxMonsters = 5;
-let monsterwave = 0;
 let isPause = false; // 是否暂停游戏
 let isHelp = false; // 是否打开帮助界面
 let isStart = false;
@@ -61,6 +62,10 @@ let isTheFirst2 = true;
 let isTheFirst3 = true;
 const maxSpeedItem = 1;
 const maxShieldItem = 1;
+let monsterWave = 3;
+let fps = 60; // 目标帧率
+let interval = 1000 / fps; // 每帧的时间间隔
+let then = Date.now(); // 上一帧的时间戳
 
 // 玩家准备蓄力射箭
 canvas.addEventListener("mousedown", (event) => {
@@ -83,9 +88,9 @@ canvas.addEventListener("mousedown", (event) => {
 
 // 玩家准备蓄力射箭
 canvas.addEventListener("mousedown", (event) => {
-    if (player.attackCooldown != 0 || 
-        player.isCloseAttack || 
-        player.health <= 0 || 
+    if (player.attackCooldown != 0 ||
+        player.isCloseAttack ||
+        player.health <= 0 ||
         event.button != 0 || // 鼠标右键不触发射箭
         isHelp || isPause) {
         return;
@@ -119,10 +124,10 @@ canvas.addEventListener("mousemove", (event) => {
 
 // 松开按键时射箭
 canvas.addEventListener("mouseup", (event) => {
-    if (!player.isShootArrow || 
-        player.health <= 0 || 
+    if (!player.isShootArrow ||
+        player.health <= 0 ||
         event.button != 0 || // 鼠标左键松开触发射箭
-        player.isCloseAttack || 
+        player.isCloseAttack ||
         isHelp || isPause) {
         return;
     }
@@ -138,9 +143,9 @@ canvas.addEventListener("mouseup", (event) => {
 canvas.addEventListener("contextmenu", (event) => {
     event.preventDefault();
     // 攻击冷却时间
-    if (player.attackCooldown != 0 || 
-        player.health <= 0 || 
-        player.isShootArrow || 
+    if (player.attackCooldown != 0 ||
+        player.health <= 0 ||
+        player.isShootArrow ||
         isPause || isHelp) {
         return;
     }
@@ -339,7 +344,7 @@ function handleKeyDown(event) {
             }
             break;
         // 按下空格键暂停游戏
-        case " ": 
+        case " ":
             if (!isHelp) {
                 isPause = !isPause;
             }
@@ -535,7 +540,8 @@ function generateDropLoot(x, y) {
     if (dropChance < 0.6) {
         dropLoots.push(new DropLoot(x, y, canvas));
         if (isTheFirst3) {
-            alert("击败怪物，有一定的概率会生成掉落物，拾取会增加人物生命值");
+            headTips.push(new HeadTips("击败怪物，有一定的概率会生成掉落物，拾取会增加人物生命值", canvas));
+            //alert("击败怪物，有一定的概率会生成掉落物，拾取会增加人物生命值");
             isTheFirst3 = false;
         }
     }
@@ -653,7 +659,8 @@ function collectItem() {
         if (distance < player.radius + speedItems[i].radius) {
             // 人物和道具碰撞
             if (isTheFirst1) {
-                alert("拾取该道具后，将获得5s的速度加成");
+                headTips.push(new HeadTips("拾取该道具后，将获得5s的速度加成", canvas))
+                //alert("拾取该道具后，将获得5s的速度加成");
                 isTheFirst1 = false;
             }
             speedItems.splice(i, 1); // 移除道具
@@ -679,7 +686,8 @@ function collectItem() {
 
         if (distance2 < player.radius + shieldItems[j].radius) {
             if (isTheFirst2) {
-                alert("拾取该道具时，获得一定量的护盾");
+                headTips.push(new HeadTips("拾取该道具时，获得一定量的护盾", canvas));
+                //alert("拾取该道具时，获得一定量的护盾");
                 isTheFirst2 = false;
             }
             if (player.shield < 100) {
@@ -700,10 +708,10 @@ function generateObstacles() {
             let x = Math.random() * canvas.width;
             let y = Math.random() * canvas.height;
             let type = Math.random() * 100;
-            if (type < 30) {
+            if (type < 40) {
                 type = 1;
             }
-            else if (type < 85) {
+            else if (type < 90) {
                 type = 2;
             }
             else {
@@ -805,7 +813,7 @@ function generateGrass() {
 // 生成怪物
 function generateMonsters() {
     if (monsters.length == 0 && rangedMonsters.length == 0) {
-        monsterwave++;
+        monsterWave++;
         let pursuitPlayerDistance;
         if (canvas.width < canvas.height) {
             pursuitPlayerDistance = canvas.width / 2;
@@ -1189,6 +1197,13 @@ function draw() {
     bomberExplosions.forEach((bomberExplosion) => bomberExplosion.draw());
     bulletExplosions.forEach((bulletExplosion) => bulletExplosion.draw());
     particles.forEach((particle) => particle.draw());
+    headTips.forEach((headTip) => {
+        headTip.draw();
+        if (headTip.animationFrame >= headTip.animationFrameTime) {
+            headTips.splice(0, 1);
+        }
+    });
+    player.ctx.save();
     player.ctx.fillStyle = "black";
     player.ctx.font = "20px Arial";
     player.ctx.fillText("Health: " + player.health + "/" + player.currentHealth, 10, 30);
@@ -1203,6 +1218,7 @@ function draw() {
         ctx.fillText("游戏已暂停", canvas.width / 2 - 100, canvas.height / 2);
         ctx.fill();
     }
+    player.ctx.restore();
 }
 
 // 游戏奖励机制
@@ -1216,13 +1232,16 @@ function reward() {
 
 // 游戏循环
 function gameLoop() {
-    if (!isPause && !isHelp) {
+    // 帧数控制为60
+    const now = Date.now();
+    const delta = now - then;
+    if (!isPause && !isHelp && delta > interval) {
         updatePlayerSpeed()
         generateObstacles();
         generateGrass();
         if (player.health > 0) {
             if (portal.length != 0) {
-                if (!portal[0].isActivated){
+                if (!portal[0].isActivated) {
                     player.move();
                 }
             }
@@ -1246,21 +1265,23 @@ function gameLoop() {
         checkStrengthenedBulletMonsterCollision();
         updateBulletExplosions();
         draw();
-        if (isStart) {
-            const ctx = canvas.getContext("2d");
-            ctx.fillStyle = "rgb(0, 0, 0, 0)";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = "blue";
-            ctx.font = "30px Arial";
-            ctx.fillText("玩家可通过wasd移动角色，通过鼠标左键或右键进行攻击", canvas.width / 2 - 410, canvas.height / 2 - 200);
-            ctx.fill();
-            setTimeout(() => {
-                isStart = false;
-            }, 10000);
-        }
+        // if (isStart) {
+        //     const ctx = canvas.getContext("2d");
+        //     ctx.save();
+        //     ctx.fillStyle = "rgb(0, 0, 0, 0)";
+        //     ctx.fillRect(0, 0, canvas.width, canvas.height);
+        //     ctx.fillStyle = "blue";
+        //     ctx.font = "30px Arial";
+        //     ctx.fillText("玩家可通过wasd移动角色，通过鼠标左键或右键进行攻击", canvas.width / 2 - 410, canvas.height / 2 - 200);
+        //     ctx.fill();
+        //     ctx.restore();
+        //     setTimeout(() => {
+        //         isStart = false;
+        //     }, 10000);
+        // }
     }
-    draw();
-    if (monsterwave % 3 == 0 && monsterwave != 0 && monsters.length == 0 && 
+
+    if (monsterWave % 3 == 0 && monsterWave != 0 && monsters.length == 0 &&
         rangedMonsters.length == 0 && bombers.length == 0) {
         if (portal.length == 0) {
             generatePortal();
@@ -1270,7 +1291,9 @@ function gameLoop() {
             refreshScene();
         }
         if (portal.length == 0) {
-            monsterwave++;
+            monsterWave++;
+            let count = Math.floor(monsterWave / 3 + 1);
+            headTips.push(new HeadTips("第 " + count + " 间", canvas));
         }
     }
     if (monsters.length == 0 && rangedMonsters.length == 0 && bombers.length == 0 && portal.length == 0) {

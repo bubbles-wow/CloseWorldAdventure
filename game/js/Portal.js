@@ -1,5 +1,6 @@
 import { obstacles, littlePlants } from "./Obstacle.js";
 import { canvas, player, Player } from "./Player.js";
+import { headTips, HeadTips } from "./Tips.js";
 
 export class Portal {
     constructor(x, y, canvas) {
@@ -27,13 +28,16 @@ export class Portal {
             this.animationFrame = 0;
         }
 
+        this.ctx.save();
         if (this.isActivated) {
+            // 绘制刷新场景特效
             for (let i = 0; i < 6; i++) {
-                this.ctx.fillStyle = "rgba(252, 246, 96, 0.3)";
                 this.ctx.beginPath();
+                this.ctx.fillStyle = "rgba(252, 246, 96, 0.3)";
                 this.ctx.arc(this.x, this.y, this.RefreshSceneRadius * i, 0, Math.PI * 2);
                 this.ctx.fill();
             }
+            this.ctx.restore();
             let max = canvas.height;
             if (canvas.width > canvas.height) {
                 max = canvas.width;
@@ -51,6 +55,7 @@ export class Portal {
         // this.ctx.fillStyle = "yellow";
         // this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         // this.ctx.fill();
+        this.ctx.restore();
     }
 }
 
@@ -78,16 +83,16 @@ export function generatePortal() {
         let distance = Math.sqrt(dx * dx + dy * dy)
         if (distance < obstacle.radius + Portal.radius) {
             if (dx < 0) {
-                x -= obstacle.radius + Portal.radius;
+                x -= obstacle.radius;
             }
             else {
-                x += obstacle.radius + Portal.radius;
+                x += obstacle.radius;
             }
             if (dy < 0) {
-                y -= obstacle.radius + Portal.radius;
+                y -= obstacle.radius;
             }
             else {
-                y += obstacle.radius + Portal.radius;
+                y += obstacle.radius;
             }
         }
         if (x < 32) {

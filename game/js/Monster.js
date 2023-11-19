@@ -271,7 +271,7 @@ export class Monster {
 
         this.ctx.drawImage(skeletonImage, imageDirectionX, imageDirectionY, 48, 48, this.x - this.radius - 17 * 2, this.y - this.radius - 28 * 2, 48 * 2, 48 * 2);
 
-
+        this.ctx.save();
         this.ctx.beginPath();
         // 绘制生命值条
         this.ctx.fillStyle = "gray";
@@ -287,6 +287,7 @@ export class Monster {
         // this.ctx.fillStyle = "red";
         // this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         // this.ctx.fill();
+        this.ctx.restore();
     }
 }
 

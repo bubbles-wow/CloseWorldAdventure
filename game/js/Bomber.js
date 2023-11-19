@@ -308,6 +308,7 @@ export class Bomber {
         
         this.ctx.drawImage(skullImage, imageDirectionX, imageDirectionY, 48, 48, this.x - this.radius - 18 * 2.5, this.y - this.radius - 30 * 2.5, 48 * 2.5, 48 * 2.5);
 
+        this.ctx.save();
         this.ctx.beginPath();
         // 绘制生命值条
         this.ctx.fillStyle = "gray";
@@ -328,6 +329,7 @@ export class Bomber {
         // }
         // this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         // this.ctx.fill();
+        this.ctx.restore();
     }
 }
 
@@ -361,6 +363,7 @@ export class BomberExplosion {
         this.ctx.beginPath();
         this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         this.ctx.fill();
+        this.ctx.closePath();
         this.ctx.restore();
     }
 }
