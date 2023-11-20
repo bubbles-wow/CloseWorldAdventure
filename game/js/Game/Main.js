@@ -24,7 +24,7 @@ import { portal, generatePortal, checkPlayerInPortal, refreshScene } from "../Sc
 import { gameStart, setIsSkip } from "../Scene/newPlayerScene.js";
 
 import { particles, moveBloodSplash } from "../Particle/BloodParticle.js";
-import { HeadTips, headTips } from "../Particle/Tips.js";
+import { ArrowTips, HeadTips, arrowTips, headTips } from "../Particle/Tips.js";
 
 let fps = 60; // 目标帧率
 let interval = 1000 / fps; // 每帧的时间间隔
@@ -142,6 +142,7 @@ function draw() {
     bomberExplosions.forEach((bomberExplosion) => bomberExplosion.draw());
     bulletExplosions.forEach((bulletExplosion) => bulletExplosion.draw());
     particles.forEach((particle) => particle.draw());
+    arrowTips.forEach((arrowTip) => arrowTip.draw());
     if (headTips.length != 0) {
         headTips[0].draw();
         if (headTips[0].animationFrame >= headTips[0].animationFrameTime) {
@@ -217,9 +218,13 @@ function gameLoop() {
         rangedMonsters.length == 0 && bombers.length == 0) {
         if (portal.length == 0) {
             generatePortal();
+            arrowTips.push(new ArrowTips(portal[0].x, portal[0].y - portal[0].radius - 35, 3, canvas));
         }
         checkPlayerInPortal();
         if (portal[0].isActivated) {
+            if (arrowTips.length != 0) {
+                arrowTips.length = 0;
+            }
             refreshScene();
         }
         if (portal.length == 0) {
@@ -318,11 +323,12 @@ startButton.addEventListener("click", () => {
     canvas.style.display = "block";
     skipButton.style.display = "block";
     setIsStart(true);
+    helpButton.style.display = "none";
     gameLoop();
 });
 // 帮助界面
 helpButton.addEventListener("click", () => {
-    helpScreen.style.display = "block";
+    helpScreen.style.display = "flex";
     helpButton.style.display = "none";
     setIsHelp(true);
 });

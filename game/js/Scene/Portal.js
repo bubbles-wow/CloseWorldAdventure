@@ -88,33 +88,33 @@ export function generatePortal() {
         let distance = Math.sqrt(dx * dx + dy * dy)
         if (distance < obstacle.radius + Portal.radius) {
             if (dx < 0) {
-                x -= obstacle.radius;
+                x -= obstacle.radius + Portal.radius;
             }
             else {
-                x += obstacle.radius;
+                x += obstacle.radius + Portal.radius;
             }
             if (dy < 0) {
-                y -= obstacle.radius;
+                y -= obstacle.radius + Portal.radius;
             }
             else {
-                y += obstacle.radius;
+                y += obstacle.radius + Portal.radius;
             }
         }
-        if (x < 32) {
-            x += 32;
-        }
-        else if (x > canvas.width - 32) {
-            x -= 32;
-        }
-        else {
-        }
-        if (y < 32) {
-            y += 32;
-        }
-        else if (y > canvas.height - 32) {
-            y -= 32;
-        }
     });
+    if (x < 32) {
+        x += 32;
+    }
+    else if (x > canvas.width - 32) {
+        x -= 32;
+    }
+    else {
+    }
+    if (y < 32) {
+        y += 32;
+    }
+    else if (y > canvas.height - 32) {
+        y -= 32;
+    }
     portal.push(new Portal(x, y, canvas));
 }
 

@@ -1,6 +1,7 @@
-import { canvas, setIsStart, setMonsterWave, monsterWave, skipButton } from "../Game/Core.js";
+import { canvas, setIsStart, setMonsterWave, monsterWave, skipButton, helpButton } from "../Game/Core.js";
 
 import { player } from "../Player/Player.js";
+import { bullets } from "../Player/Bullet.js";
 
 import { generateMonster, monsters } from "../Monster/Monster.js";
 import { rangedMonsters, generateRangedMonster } from "../Monster/RangedMonster.js";
@@ -9,7 +10,7 @@ import { bombers, generateBomber } from "../Monster/Bomber.js";
 import { Portal, generatePortal, portal, checkPlayerInPortal, refreshScene } from "../Scene/Portal.js";
 import { generateObstacles, generateGrass } from "../Scene/Obstacle.js";
 
-import { HeadTips, headTips } from "../Particle/Tips.js";
+import { HeadTips, headTips, ArrowTips, arrowTips } from "../Particle/Tips.js";
 
 let step = 0;
 let task = "";
@@ -50,6 +51,7 @@ export function gameStart() {
             task = "击败敌人。"
             let position = generatePosition();
             generateMonster(position.x, position.y, position.pursuitPlayerDistance);
+            arrowTips.push(new ArrowTips(monsters[0].x, monsters[0].y - monsters[0].radius - 35, 3, canvas));
             showTips[step] = true;
         }
         if (step == 5 && !showTips[5]) {
@@ -57,6 +59,7 @@ export function gameStart() {
             task = "击败敌人。"
             let position = generatePosition();
             generateRangedMonster(position.x, position.y, position.pursuitPlayerDistance);
+            arrowTips.push(new ArrowTips(rangedMonsters[0].x, rangedMonsters[0].y - rangedMonsters[0].radius - 35, 3, canvas));
             showTips[step] = true;
         }
         if (step == 6 && !showTips[6]) {
@@ -64,12 +67,14 @@ export function gameStart() {
             task = "击败敌人。"
             let position = generatePosition();
             generateBomber(position.x, position.y, position.pursuitPlayerDistance);
+            arrowTips.push(new ArrowTips(bombers[0].x, bombers[0].y - bombers[0].radius - 35, 3, canvas));
             showTips[step] = true;
         }
         if (step == 7 && !showTips[7]) {
             headTips.push(new HeadTips("任务完成！出现了一个传送门！进入它，就能进入新的冒险了！", canvas));
             task = "进入传送门。"
             generatePortal();
+            arrowTips.push(new ArrowTips(portal[0].x, portal[0].y - portal[0].radius - 35, 3, canvas));
             showTips[step] = true;
         }
     }
@@ -86,7 +91,7 @@ export function gameStart() {
             }
         }
         if (step == 1) {
-            if (player.isShootArrow) {
+            if (player.isShootArrow || bullets.length > 0) {
                 stepDone = true;
                 player.health = player.currentHealth;
             }
@@ -96,6 +101,14 @@ export function gameStart() {
                 stepDone = true;
                 player.health = player.currentHealth;
             }
+            else {
+                bullets.forEach(bullet => {
+                    if (bullet.speed > 8) {
+                        stepDone = true;
+                        player.health = player.currentHealth;
+                    }
+                });
+            } 
         }
         if (step == 3) {
             if (player.isCloseAttack) {
@@ -106,31 +119,47 @@ export function gameStart() {
         if (step == 4) {
             if (monsters.length == 0) {
                 stepDone = true;
+                arrowTips.length = 0;
                 player.health = player.currentHealth;
                 player.score = 0;
                 headTips.push(new HeadTips("干得漂亮！", canvas));
+            }
+            else {
+                arrowTips[0].x = monsters[0].x;
+                arrowTips[0].y = monsters[0].y - monsters[0].radius - 30;
             }
         }
         if (step == 5) {
             if (rangedMonsters.length == 0) {
                 stepDone = true;
+                arrowTips.length = 0;
                 player.health = player.currentHealth;
                 player.score = 0;
                 headTips.push(new HeadTips("干得漂亮！", canvas));
+            }
+            else {
+                arrowTips[0].x = rangedMonsters[0].x;
+                arrowTips[0].y = rangedMonsters[0].y - rangedMonsters[0].radius - 30;
             }
         }
         if (step == 6) {
             if (bombers.length == 0) {
                 stepDone = true;
+                arrowTips.length = 0;
                 player.health = player.currentHealth;
                 player.score = 0;
                 headTips.push(new HeadTips("干得漂亮！", canvas));
+            }
+            else {
+                arrowTips[0].x = bombers[0].x;
+                arrowTips[0].y = bombers[0].y - bombers[0].radius - 30;
             }
         }
         if (step == 7) {
             checkPlayerInPortal();
             if (portal[0].isActivated) {
                 stepDone = true;
+                arrowTips.length = 0;
                 player.health = player.currentHealth;
                 headTips.push(new HeadTips("新手教程完成！", canvas));
                 skipButton.style.display = "none";
@@ -158,16 +187,19 @@ export function gameStart() {
             let count = Math.floor(monsterWave / 4 + 1);
             headTips.push(new HeadTips("第 " + count + " 间", canvas));
             setIsStart(false);
+            helpButton.style.display = "block";
         }
     }
 
     player.ctx.save();
     player.ctx.fillStyle = "yellow";
     player.ctx.font = "20px Arial";
-    player.ctx.fillText("当前任务: " + task, 10, canvas.height / 2 - 30);
-    if (stepDone) {
-        player.ctx.fillStyle = "greenyellow";
-        player.ctx.fillText("任务完成！", 10, canvas.height / 2);
+    if (!isSkip) {
+        player.ctx.fillText("当前任务: " + task, 10, canvas.height / 2 - 30);
+        if (stepDone) {
+            player.ctx.fillStyle = "greenyellow";
+            player.ctx.fillText("任务完成！", 10, canvas.height / 2);
+        }
     }
     player.ctx.restore();
 

@@ -8,27 +8,88 @@
 <body>
     <div id="game">
         <canvas id="Canvas"></canvas>
+        <button id="skipButton" oncontextmenu="return false;">跳过新手教程</button>
         <button id="helpButton" oncontextmenu="return false;">帮助</button>
-        <button id="skipButton" oncontextmenu="return false;" style="display: none;">跳过新手教程</button>
     </div>
     <div id="helpScreen">
-        <h1>帮助</h1>
-        <p>W、A、S、D控制<span style="color: #f0149c;">玩家（紫红色）</span>上、左、下、右移动</p>
-        <p>鼠标点击屏幕，玩家会射出一发子弹到点击位置。</p>
-        <p>怪物有三种：<span style="color: red;">近战（红色）</span>、<span style="color: yellow;">远程（黄色）</span>、<span style="color: #98e61a;">炸弹人（黄绿色）</span>。</p>
-        <p>近战怪物会向玩家移动，碰到玩家会造成伤害。</p>
-        <p>远程怪物会向玩家移动，但会与玩家保持一定距离，同时会向玩家射击子弹。</p>
-        <p>炸弹人会向玩家移动，靠近玩家会开始爆炸爆炸，爆炸能对玩家和怪物造成大量伤害。</p>
-        <p>场景中会随机刷新<span style="color: gray;">障碍物（灰色）</span>，玩家和怪物均不能穿过。</p>
-        <p>场景中会随机刷新道具，玩家接触到会自动拾取，<span style="color: green;">绿色道具</span>能够恢复生命值，<span style="color: white;">白色道具</span>能够增加护盾。</p>
+        <h1>游戏帮助</h1>
+        <h2>游戏目标：寻找并击败怪物，进入传送门，向前冒险！</h2>
+
+        <h3>玩家介绍</h3>
+        <div id="playerIntroduction" class="introduction">
+            <div id="player" class="tab">
+                <div id="playerAnimation" class="animation"></div>
+                <div id="playerText" class="text">
+                    可以通过键盘上的WASD按键移动玩家的位置，进行冒险；<br>
+                    玩家拥有两种攻击方式（近距离和远距离）;<br>按下鼠标右键可以进行挥砍，对前方一定范围内敌人造成伤害；<br>
+                    按下鼠标左键进行弓箭射箭，长按可以进行力量更强的拉弓射击，对命中的敌人造成伤害;<br>
+                    还会有一定几率触发爆炸弓箭效果。
+                </div>
+            </div>
+        </div>
+
+        <div id="monstersIntroduction" class="introduction">
+            <h3>怪物介绍</h3>
+            <div id="monster" class="tab">
+                <div id="monsterAnimation" class="animation"></div>
+                <div id="monsterText" class="text">
+                    骷髅战士会对被发现的玩家进行冲锋，通过手中的刀阻止玩家的冒险。<br>
+                    <br>
+                </div>
+            </div>
+            <div id="rangedMonster" class="tab">
+                <div id="rangedMonsterAnimation" class="animation"></div>
+                <div id="rangedMonsterText" class="text">
+                    骷髅射手会对被发现的玩家进行弓箭射箭，并且会找到有利的位置攻击玩家。<br>
+                    在玩家靠近它时，它会选择退后，保持与玩家的距离，并寻找合适的位置进行攻击。<br>
+                </div>
+            </div>
+            <div id="bomber" class="tab">
+                <div id="bomberAnimation" class="animation"></div>
+                <div id="bomberText" class="text">
+                    蓝火骷髅头会试图靠近玩家，并且在靠近一定距离后开始爆炸倒计时。<br>
+                    当蓝火骷髅头爆炸时，会对附近的玩家和敌人造成伤害。<br>
+                </div>
+            </div>
+        </div>
+
+        <div id="sceneIntroduction" class="introduction">
+            <h3>场景介绍</h3>
+            <div id="obstacle" class="tab">
+                <div id="obstacleAnimation"></div>
+                <div id="obstacleText" class="text">
+                    各种各样的树，可以阻挡玩家、敌人的移动，也可以阻挡子弹。<br>
+                    不过树下可能会有好东西出现。<br>
+                </div>
+            </div>
+        </div>
+
+        <div id="itemIntroduction" class="introduction">
+            <h3>物品介绍</h3>
+            <div id="speedItems" class="tab">
+                <div id="speedItemsAnimation"></div>
+                <div id="speedItemsText" class="text">
+                    能量饮料，玩家拾取后可以增加玩家的移动速度，持续一段时间。<br>
+                </div>
+            </div>
+            <div id="shieldItems" class="tab">
+                <div id="shieldItemsAnimation"></div>
+                <div id="shieldItemsText" class="text">
+                    护盾药水：可以增加玩家的防御力，能够提升可以避免伤害的护盾值。<br>
+                </div>
+            </div>
+        </div>
+
         <button id="closeButton">关闭</button>
     </div>
-    
+
     <div id="gameStartScreen">
+        <br><br><br><br><br><br><br><br><br><br><br><br>
         <h1>游戏开始</h1>
         <button id="startButton">开始游戏</button>
     </div>
     <div id="gameOverScreen">
+        <br><br><br><br><br><br><br><br><br><br><br><br>
         <h1>游戏结束</h1>
         <p>您的分数： <span id="scoreDisplay"></span></p>
         <button id="restartButton">重新开始</button>

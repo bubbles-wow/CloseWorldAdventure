@@ -2,7 +2,7 @@ export const canvas = document.getElementById("Canvas");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-export let isStart = false;
+export let isStart = false; // 是否进入新手教程
 export let isPause = false; // 是否暂停游戏
 export let isHelp = false; // 是否打开帮助界面
 
@@ -21,8 +21,11 @@ export let helpButton = document.getElementById("helpButton");
 export let helpScreen = document.getElementById("helpScreen");
 export let closeButton = document.getElementById("closeButton");
 export let skipButton = document.getElementById("skipButton");
-gameStartScreen.style.paddingTop = window.innerHeight / 1.5 + "px";
-gameOverScreen.style.paddingTop = window.innerHeight / 1.5 + "px";
+
+gameStartScreen.style.width = canvas.width + "px";
+gameStartScreen.style.height = canvas.height + "px";
+gameOverScreen.style.width = canvas.width + "px";
+gameOverScreen.style.height = canvas.height + "px";
 
 export function setMonsterWave(int) {
     monsterWave = int;

@@ -51,10 +51,36 @@ export class HeadTips {
         this.ctx.restore();
         this.ctx.globalAlpha = 1;
     }
-    
-    
+}
+
+export class ArrowTips {
+    constructor(x, y, scale, canvas) {
+        this.x = x;
+        this.y = y;
+        this.scale = scale;
+        this.canvas = canvas;
+        this.ctx = canvas.getContext("2d");
+        this.animationFrame = 0; // 动画帧
+        this.animationFrameTime = 59; // 动画帧阈值
+    }
+
+    draw() {
+        let imageDirectionX = Math.floor(this.animationFrame / 15);
+        let imageDirectionY = 0;
+        // 更新动画帧
+        if (this.animationFrame < this.animationFrameTime) {
+            this.animationFrame++;
+        }
+        else {
+            this.animationFrame = 0;
+        }
+        this.ctx.drawImage(arrowTipsImage, imageDirectionX * 16, imageDirectionY, 16, 16, this.x - 8 * this.scale, this.y - 8 * this.scale, 16 * this.scale, 16 * this.scale);
+    }
 }
 
 export const headTips = [];
+export const arrowTips = [];
 const headTipsImage = new Image();
+const arrowTipsImage = new Image();
 headTipsImage.src = "./res/headTips.png";
+arrowTipsImage.src = "./res/tipsArrow.png";
