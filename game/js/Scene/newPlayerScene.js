@@ -108,7 +108,7 @@ export function gameStart() {
                         player.health = player.currentHealth;
                     }
                 });
-            } 
+            }
         }
         if (step == 3) {
             if (player.isCloseAttack) {

@@ -1,4 +1,4 @@
-import { canvas } from "../Game/Core.js";
+import { canvas, killedMonsters, setKilledMonsters } from "../Game/Core.js";
 
 import { player } from "../Player/Player.js";
 
@@ -99,6 +99,7 @@ export function checkBulletMonsterCollision() {
                     player.score += monsters[j].score; // 增加玩家得分
                     generateDropLoot(monsters[j].x, monsters[j].y);
                     monsters.splice(j, 1); // 移除生命值为 0 的怪物
+                    setKilledMonsters(killedMonsters + 1);
                 }
                 bullets.splice(i, 1); // 移除击中的子弹
                 i--;
@@ -121,6 +122,7 @@ export function checkBulletMonsterCollision() {
                     player.score += rangedMonsters[j].score; // 增加玩家得分
                     generateDropLoot(rangedMonsters[j].x, rangedMonsters[j].y);
                     rangedMonsters.splice(j, 1); // 移除生命值为 0 的怪物
+                    setKilledMonsters(killedMonsters + 1);
                 }
                 bullets.splice(i, 1); // 移除击中的子弹
                 i--;
@@ -148,6 +150,7 @@ export function checkBulletMonsterCollision() {
                     player.score += bombers[j].score; // 增加玩家得分
                     generateDropLoot(bombers[j].x, bombers[j].y);
                     bombers.splice(j, 1); // 移除生命值为 0 的怪物
+                    setKilledMonsters(killedMonsters + 1);
                 }
                 bullets.splice(i, 1); // 移除击中的子弹
                 i--;

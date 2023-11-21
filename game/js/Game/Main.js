@@ -1,5 +1,6 @@
-import { canvas, isStart, isPause, isHelp, monsterWave, maxMonsters, setMonsterWave, setIsStart, setIsHelp, setIsPause } from "./Core.js";
-import { gameStartScreen, gameOverScreen, startButton, helpButton, helpScreen, closeButton, skipButton } from "./Core.js";
+import { canvas, isStart, isPause, isHelp, monsterWave, maxMonsters, canGenerateItem, targetMonsterWave, killedMonsters } from "./Core.js";
+import { setMonsterWave, setIsStart, setIsHelp, setIsPause, setCanGenerateItem, setKilledMonsters } from "./Core.js";
+import { gameStartScreen, gameOverScreen, startButton, newPlayerButton, helpButton, helpScreen, closeButton, skipButton } from "./Core.js";
 
 import { rewards } from "../Player/Reward.js";
 import { player, updatePlayerSpeed, handleKeyDown, handleKeyUp } from "../Player/Player.js";
@@ -18,7 +19,7 @@ import { bomberExplosions, updateBomberExplosions } from "../Monster/Bomber.js";
 import { obstacles, generateObstacles } from "../Scene/Obstacle.js";
 import { littlePlants, generateGrass } from "../Scene/Obstacle.js";
 import { speedItems, shieldItems } from "../Scene/item.js";
-import { generateItem, generateShieldItem, collectItem } from "../Scene/item.js";
+import { generateItem, collectItem } from "../Scene/item.js";
 import { dropLoots, getDropLoot } from "../Scene/DropLoot.js";
 import { portal, generatePortal, checkPlayerInPortal, refreshScene } from "../Scene/Portal.js";
 import { gameStart, setIsSkip } from "../Scene/newPlayerScene.js";
@@ -152,17 +153,23 @@ function draw() {
     player.ctx.save();
     player.ctx.fillStyle = "black";
     player.ctx.font = "20px Arial";
-    player.ctx.fillText("Health: " + player.health + "/" + player.currentHealth, 10, 30);
-    player.ctx.fillText("Shield: " + player.shield, 10, 60);
-    player.ctx.fillText("Score: " + player.score, 10, 90);
+    player.ctx.fillText("生命值: " + player.health + "/" + player.currentHealth, 10, 30);
+    player.ctx.fillText("护盾值: " + player.shield, 10, 60);
+    player.ctx.fillText("得分: " + player.score, 10, 90);
+    if (!isStart) {
+        let count = Math.floor(monsterWave / targetMonsterWave + 1);
+        if (monsterWave % targetMonsterWave == 0) {
+            count--;
+        }
+        player.ctx.fillText("当前进度：第" + count + "区域", 10, 120);
+    }
     if (isPause) {
-        const ctx = canvas.getContext("2d");
-        ctx.fillStyle = "rgb(0, 0, 0, 0.5)";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "30px Arial";
-        ctx.fillText("游戏已暂停", canvas.width / 2 - 100, canvas.height / 2);
-        ctx.fill();
+        player.ctx.fillStyle = "rgb(0, 0, 0, 0.5)";
+        player.ctx.fillRect(0, 0, canvas.width, canvas.height);
+        player.ctx.fillStyle = "#ffffff";
+        player.ctx.font = "30px Arial";
+        player.ctx.fillText("游戏已暂停", canvas.width / 2 - 100, canvas.height / 2);
+        player.ctx.fill();
     }
     player.ctx.restore();
 }
@@ -196,6 +203,10 @@ function gameLoop() {
         }
         updatePlayerSpeed();
         generateObstacles();
+        if (canGenerateItem) {
+            generateItem();
+            setCanGenerateItem(false);
+        }
         generateGrass();
         if (player.health > 0) {
             if (portal.length != 0) {
@@ -214,7 +225,7 @@ function gameLoop() {
         checkDamage()
     }
     draw();
-    if (monsterWave % 4 == 0 && monsterWave != 0 && monsters.length == 0 &&
+    if (monsterWave % targetMonsterWave == 0 && monsterWave != 0 && monsters.length == 0 &&
         rangedMonsters.length == 0 && bombers.length == 0) {
         if (portal.length == 0) {
             generatePortal();
@@ -230,12 +241,14 @@ function gameLoop() {
         if (portal.length == 0) {
             //monsterWave++;
             setMonsterWave(monsterWave + 1);
-            let count = Math.floor(monsterWave / 4 + 1);
+            let count = Math.floor(monsterWave / targetMonsterWave + 1);
             headTips.push(new HeadTips("第 " + count + " 间", canvas));
+            setCanGenerateItem(true);
         }
     }
     else if (monsterWave == 0) {
         headTips.push(new HeadTips("第 1 间", canvas));
+        setCanGenerateItem(true);
         //monsterWave++;
         setMonsterWave(monsterWave + 1);
     }
@@ -248,16 +261,6 @@ function gameLoop() {
         //cancelAnimationFrame(animationFrameId);
         player.ctx.clearRect(0, 0, player.canvas.width, player.canvas.height);
         gameOver();
-    }
-    if (speedItems.length == 0) {
-        setTimeout(() => {
-            generateItem();
-        }, 2000);
-    }
-    if (shieldItems.length == 0) {
-        setTimeout(() => {
-            generateShieldItem();
-        }, 2000);
     }
     animationFrameId = requestAnimationFrame(gameLoop);
 }
@@ -275,6 +278,9 @@ function gameOver() {
     let scoreDisplay = document.getElementById("scoreDisplay");
     scoreDisplay.textContent = player.score;
 
+    let killedMonstersDisplay = document.getElementById("killedMonstersDisplay");
+    killedMonstersDisplay.textContent = killedMonsters;
+
     // 监听重新开始按钮的点击事件
     let restartButton = document.getElementById("restartButton");
     restartButton.addEventListener("click", () => {
@@ -288,6 +294,8 @@ function gameOver() {
         player.animationFrame = 0;
         player.animationFrameTime = 59;
         player.attackCooldown = 0;
+        player.speedUpTime = 0;
+        player.addSpeed = 0;
         player.isCloseAttack = false;
         player.isShootArrow = false;
         player.health = 100;
@@ -312,6 +320,7 @@ function gameOver() {
         setIsHelp(false);
         setIsPause(false);
         setMonsterWave(0);
+        setKilledMonsters(0)
         // 重新开始游戏循环
     });
 }
@@ -319,6 +328,11 @@ function gameOver() {
 let animationFrameId;
 // 开始游戏
 startButton.addEventListener("click", () => {
+    gameStartScreen.style.display = "none";
+    canvas.style.display = "block";
+    gameLoop();
+});
+newPlayerButton.addEventListener("click", () => {
     gameStartScreen.style.display = "none";
     canvas.style.display = "block";
     skipButton.style.display = "block";

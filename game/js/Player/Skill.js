@@ -1,4 +1,4 @@
-import { canvas } from "../Game/Core.js";
+import { canvas, killedMonsters, setKilledMonsters } from "../Game/Core.js";
 
 import { player } from "../Player/Player.js";
 
@@ -185,6 +185,7 @@ export function updateBulletExplosions() {
                     player.score += monsters[j].score;
                     generateDropLoot(monsters[j].x, monsters[j].y);
                     monsters.splice(j, 1);
+                    setKilledMonsters(killedMonsters + 1);
                 }
             }
         }
@@ -205,6 +206,7 @@ export function updateBulletExplosions() {
                     player.score += rangedMonsters[j].score;
                     generateDropLoot(rangedMonsters[j].x, rangedMonsters[j].y);
                     rangedMonsters.splice(j, 1);
+                    setKilledMonsters(killedMonsters + 1);
                 }
             }
         }
@@ -225,6 +227,7 @@ export function updateBulletExplosions() {
                     player.score += bombers[j].score;
                     generateDropLoot(bombers[j].x, bombers[j].y);
                     bombers.splice(j, 1);
+                    setKilledMonsters(killedMonsters + 1);
                 }
             }
         }

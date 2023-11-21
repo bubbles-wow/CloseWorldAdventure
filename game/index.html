@@ -12,70 +12,113 @@
         <button id="helpButton" oncontextmenu="return false;">帮助</button>
     </div>
     <div id="helpScreen">
-        <h1>游戏帮助</h1>
-        <h2>游戏目标：寻找并击败怪物，进入传送门，向前冒险！</h2>
+        <h1>帮助</h1>
 
-        <h3>玩家介绍</h3>
+        <h2>玩法介绍</h2>
         <div id="playerIntroduction" class="introduction">
             <div id="player" class="tab">
                 <div id="playerAnimation" class="animation"></div>
                 <div id="playerText" class="text">
-                    可以通过键盘上的WASD按键移动玩家的位置，进行冒险；<br>
-                    玩家拥有两种攻击方式（近距离和远距离）;<br>按下鼠标右键可以进行挥砍，对前方一定范围内敌人造成伤害；<br>
-                    按下鼠标左键进行弓箭射箭，长按可以进行力量更强的拉弓射击，对命中的敌人造成伤害;<br>
-                    还会有一定几率触发爆炸弓箭效果。
+                    你将扮演一位<b style="color: rgb(0, 179, 255);">冒险家</b>，你要做的是寻找并击败怪物，进入传送门，向前冒险！<br><br><br>
+                </div>
+            </div>
+            <div id="playerRunning" class="tab">
+                <div id="playerRunningAnimation" class="animation"></div>
+                <div id="playerRunningText" class="text">
+                    移动：通过键盘上的 <b>W、A、S、D</b> 按键移动玩家的位置，进行冒险。<br><br><br>
+                </div>
+            </div>
+            <div id="playerCloseAttack" class="tab">
+                <div id="playerCloseAttackAnimation" class="animation"></div>
+                <div id="playerCloseAttackText" class="text">
+                    近距离攻击：<b>按下鼠标右键</b> 可以进行挥砍，对前方一定范围内敌人造成伤害。<br><br><br>
+                </div>
+            </div>
+            <div id="playerShoot" class="tab">
+                <div id="playerShootAnimation" class="animation"></div>
+                <div id="playerShootText" class="text">
+                    远距离攻击：<b>按下鼠标左键</b> 进行弓箭射箭，对命中的敌人造成伤害；<br>
+                    <b>长按鼠标左键</b> 可以进行力量更强的拉弓射击，对敌人造成更大的伤害和更强的击退效果；<br>
+                    另外，射出的箭还会有一定几率触发爆炸弓箭效果。<br>
+                </div>
+            </div>
+            <div id="playerRest" class="tab">
+                <div id="playerRestAnimation" class="animation"></div>
+                <div id="playerRestText" class="text">
+                    暂停游戏：<b>按下空格键</b> ，或者点击 <b>帮助按钮</b> 可以暂停游戏，此时游戏内所有东西都将静止。<br>
+                    不过敌人还是会正常出现，当然敌人也不会动。<br>
+                    休息一下吧，冒险家。<br>
                 </div>
             </div>
         </div>
-
+        <div></div>
+        <h2>敌人介绍</h2>
         <div id="monstersIntroduction" class="introduction">
-            <h3>怪物介绍</h3>
             <div id="monster" class="tab">
                 <div id="monsterAnimation" class="animation"></div>
                 <div id="monsterText" class="text">
-                    骷髅战士会对被发现的玩家进行冲锋，通过手中的刀阻止玩家的冒险。<br>
-                    <br>
+                    <b style="color: rgb(59, 35, 0);">骷髅战士</b>会对被发现的玩家进行冲锋，通过手中的刀阻止玩家的冒险。<br>
+                    被玩家击败后，玩家得分加 <b style="color: rgb(0, 179, 255);">10</b>。<br><br>
                 </div>
             </div>
             <div id="rangedMonster" class="tab">
                 <div id="rangedMonsterAnimation" class="animation"></div>
                 <div id="rangedMonsterText" class="text">
-                    骷髅射手会对被发现的玩家进行弓箭射箭，并且会找到有利的位置攻击玩家。<br>
-                    在玩家靠近它时，它会选择退后，保持与玩家的距离，并寻找合适的位置进行攻击。<br>
+                    <b style="color: rgb(59, 35, 0);">骷髅射手</b>会对被发现的玩家进行弓箭射箭，并且会找到有利的位置攻击玩家。<br>
+                    在玩家靠近骷髅射手时，骷髅射手会选择退后，保持与玩家的距离，并寻找合适的位置进行攻击。<br>
+                    被玩家击败后，玩家得分加 <b style="color: rgb(0, 179, 255);">10</b>。<br>
                 </div>
             </div>
             <div id="bomber" class="tab">
                 <div id="bomberAnimation" class="animation"></div>
                 <div id="bomberText" class="text">
-                    蓝火骷髅头会试图靠近玩家，并且在靠近一定距离后开始爆炸倒计时。<br>
-                    当蓝火骷髅头爆炸时，会对附近的玩家和敌人造成伤害。<br>
+                    <b  style="color: rgb(2, 101, 144);">燃烧的骷髅头</b>会试图靠近玩家，并且在靠近一定距离后开始爆炸倒计时。<br>
+                    当燃烧的骷髅头爆炸时，会对附近的玩家和敌人造成伤害。<br>
+                    被玩家击败后，玩家得分加 <b style="color: rgb(0, 179, 255);">40</b>。<br>
                 </div>
             </div>
         </div>
 
+        <h2>场景介绍</h2>
         <div id="sceneIntroduction" class="introduction">
-            <h3>场景介绍</h3>
             <div id="obstacle" class="tab">
                 <div id="obstacleAnimation"></div>
                 <div id="obstacleText" class="text">
-                    各种各样的树，可以阻挡玩家、敌人的移动，也可以阻挡子弹。<br>
+                    各种各样的<b style="color: rgb(1, 146, 1);">树</b>，可以阻挡玩家、敌人的移动，也可以阻挡玩家和敌人的箭。<br>
                     不过树下可能会有好东西出现。<br>
+                </div>
+            </div>
+            <div id="portal" class="tab">
+                <div id="portalAnimation"></div>
+                <div id="portalText" class="text">
+                    <b style="color: rgb(157, 155, 4);">传送门</b>，击败一定数量的敌人后刷新。<br>
+                    勇敢地踏入新的冒险中吧！<br>
                 </div>
             </div>
         </div>
 
         <div id="itemIntroduction" class="introduction">
             <h3>物品介绍</h3>
-            <div id="speedItems" class="tab">
-                <div id="speedItemsAnimation"></div>
-                <div id="speedItemsText" class="text">
-                    能量饮料，玩家拾取后可以增加玩家的移动速度，持续一段时间。<br>
+            <div id="speedItem" class="tab">
+                <div id="speedItemAnimation"></div>
+                <div id="speedItemText" class="text">
+                    <b style="color:rgb(160, 106, 6);">能量饮料</b>，会在新区域中随机刷新。<br>
+                    玩家拾取后可以增加玩家的移动速度，持续一段时间。<br>
+                    <b style="color:rgb(91, 160, 6);">不同大小的能量饮料</b>给予的加速效果也不相同。<br>
                 </div>
             </div>
-            <div id="shieldItems" class="tab">
-                <div id="shieldItemsAnimation"></div>
-                <div id="shieldItemsText" class="text">
-                    护盾药水：可以增加玩家的防御力，能够提升可以避免伤害的护盾值。<br>
+            <div id="shieldItem" class="tab">
+                <div id="shieldItemAnimation"></div>
+                <div id="shieldItemText" class="text">
+                    <b style="color: rgb(3, 151, 151);">护盾药水</b>，会在新区域中随机刷新。<br>
+                    玩家拾取后可以增加防御力，能够提升可以避免伤害的护盾值。<br>
+                </div>
+            </div>
+            <div id="dropLoot" class="tab">
+                <div id="dropLootAnimation"></div>
+                <div id="dropLootText" class="text">
+                    <b style="color: rgb(161, 26, 5);">心形物品</b>，击败敌人后概率掉落。<br>
+                    玩家拾取后能恢复一定的生命值。<br>
                 </div>
             </div>
         </div>
@@ -86,12 +129,14 @@
     <div id="gameStartScreen">
         <br><br><br><br><br><br><br><br><br><br><br><br>
         <h1>游戏开始</h1>
-        <button id="startButton">开始游戏</button>
+        <button id="startButton">开始冒险</button>
+        <button id="newPlayerButton">前往新手教程</button>
     </div>
     <div id="gameOverScreen">
         <br><br><br><br><br><br><br><br><br><br><br><br>
-        <h1>游戏结束</h1>
+        <h1>冒险，到此为止了</h1>
         <p>您的分数： <span id="scoreDisplay"></span></p>
+        <p>击败的敌人数量： <span id="killedMonstersDisplay"></span></p>
         <button id="restartButton">重新开始</button>
     </div>
     <script type="module" src="js/Player/Player.js"></script>

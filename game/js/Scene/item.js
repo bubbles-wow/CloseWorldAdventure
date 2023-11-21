@@ -7,38 +7,21 @@ import { obstacles } from "../Scene/Obstacle.js";
 import { HeadTips, headTips } from "../Particle/Tips.js";
 
 export class SpeedItem {
-    constructor(x, y, canvas) {
+    constructor(x, y, type, canvas) {
         this.x = x;
         this.y = y;
+        this.type = type;
         this.canvas = canvas;
         this.ctx = canvas.getContext("2d");
         this.radius = 10;
-        this.duration = 0;// 增幅时间
-        this.isAmplified = false;
     }
 
     // 绘制道具
     draw() {
+        let scale = 0.8;
         this.ctx.save();
-        this.ctx.drawImage(speedItemImage, 710, 450, 91, 220, this.x - 10, this.y - 20, 20, 40);
+        this.ctx.drawImage(speedItemImage, this.type * 24, 0, 24, 39, this.x - 12 * scale, this.y - 18 * scale, 24 * scale, 39 * scale);
         this.ctx.restore();
-    }
-    // 避开障碍物生成
-    avoidObstacles() {
-        for (let i = 0; i < obstacles.length; i++) {
-            let dx = this.x - obstacles[i].x;
-            let dy = this.y - obstacles[i].y;
-            let distance = Math.sqrt(dx * dx + dy * dy);
-            if (distance < this.radius + obstacles[i].radius) {
-                let avoidDistance = this.radius + obstacles[i].radius - distance;
-                let directionX = dx / distance;
-                let directionY = dy / distance;
-                let newX = this.x + directionX * avoidDistance;
-                let newY = this.y + directionY * avoidDistance;
-                this.x = newX;
-                this.y = newY;
-            }
-        }
     }
 }
 
@@ -55,26 +38,10 @@ export class ShieldsItem {
 
     // 绘制护盾类道具
     draw() {
+        let scale = 1.5;
         this.ctx.save();
-        this.ctx.drawImage(shieldItemImage, 160, 0, 724, 1080, this.x - 7.24, this.y - 10.8, 14.48, 21.6);
+        this.ctx.drawImage(shieldItemImage, 0, 0, 16, 16, this.x - 8 * scale, this.y - 8 * scale, 16 * scale, 16 * scale);
         this.ctx.restore();
-    }
-
-    avoidObstacles() {
-        for (let i = 0; i < obstacles.length; i++) {
-            let dx = this.x - obstacles[i].x;
-            let dy = this.y - obstacles[i].y;
-            let distance = Math.sqrt(dx * dx + dy * dy);
-            if (distance < this.radius + obstacles[i].radius) {
-                let avoidDistance = this.radius + obstacles[i].radius - distance;
-                let directionX = dx / distance;
-                let directionY = dy / distance;
-                let newX = this.x + directionX * avoidDistance;
-                let newY = this.y + directionY * avoidDistance;
-                this.x = newX;
-                this.y = newY;
-            }
-        }
     }
 }
 
@@ -87,86 +54,77 @@ shieldItemImage.src = "./res/shieldItem.png";
 
 // 生成道具
 export function generateItem() {
-    if (speedItems.length == 0) {
-        for (let i = 0; i < maxSpeedItem; i++) {
-            for (let j = 0; j < obstacles.length; j++) {
-                if (obstacles[j].type == 0) {
-                    let x = (obstacles[j].x + obstacles[j].radius + 5) - (obstacles[j].x - obstacles[j].radius - 5) * Math.random();
-                    let y = (obstacles[j].y + obstacles[j].radius + 5) - (obstacles[j].y - obstacles[j].radius - 5) * Math.random();
-                    const dx = x - obstacles[j].x;
-                    const dy = y - obstacles[j].y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    if (distance < speedItems.radius + obstacles[j].radius) {
-                        if (dx < 0) {
-                            x -= (speedItems.radius - distance + 5);
-                        }
-                        else {
-                            x += (speedItems.radius - distance + 5);
-                        }
-                        if (dy < 0) {
-                            y -= (speedItems.radius - distance + 5);
-                        }
-                        else {
-                            y += (speedItems.radius - distance + 5);
-                        }
-                    }
-                    if (
-                        x < speedItems.radius ||
-                        x > canvas.width - speedItems.radius ||
-                        y < speedItems.radius ||
-                        y > canvas.height - speedItems.radius
-                    ) {
-                        continue;
-                    }
-                    if (!speedItems.length && speedItems.length <= maxSpeedItem) {
-                        speedItems.push(new SpeedItem(x, y, canvas));
-                    }
-                }
-            }
+    speedItems.length = 0;
+    shieldItems.length = 0;
+    let Flag = [];
+    console.log(obstacles.length);
+    for (let i = 0; i < maxSpeedItem; i++) {
+        let position = Math.floor(Math.random() * obstacles.length);
+        if (Flag[position]) {
+            i--;
+            continue;
         }
+        let random = Math.random() * 100;
+        let x = obstacles[position].x;
+        let y = obstacles[position].y;
+        if (random < 50) {
+            x -= 10 + obstacles[position].radius;
+        }
+        else {
+            x += 10 + obstacles[position].radius;
+        }
+        if (x < 10 || x > canvas.width - 10 || y < 10 || y > canvas.height - 10) {
+            i--;
+            continue;
+        }
+        generateSpeedItem(x, y);
+        Flag[position] = true;
+    }
+    for (let i = 0; i < maxShieldItem; i++) {
+        let position = Math.floor(Math.random() * obstacles.length);
+        if (Flag[position]) {
+            i--;
+            continue;
+        }
+        let random = Math.random() * 100;
+        let x = obstacles[position].x;
+        let y = obstacles[position].y;
+        if (random < 50) {
+            x -= 10 + obstacles[position].radius;
+        }
+        else {
+            x += 10 + obstacles[position].radius;
+        }
+        if (x < 10 || x > canvas.width - 10 || y < 10 || y > canvas.height - 10) {
+            i--;
+            continue;
+        }
+        generateShieldItem(x, y);
+        Flag[position] = true;
     }
 }
 
-// 虽然是刷在树下，但有时候只会刷在一颗特定的树下，且有被树的图案挡住的情况
-export function generateShieldItem() {
-    if (shieldItems.length == 0) {
-        for (let i = 0; i < maxShieldItem; i++) {
-            for (let j = 0; j < obstacles.length; j++) {
-                if (obstacles[j].type == 0) {
-                    let x = (obstacles[j].x + obstacles[j].radius + 10) - (obstacles[j].x - obstacles[j].radius - 10) * Math.random();
-                    let y = (obstacles[j].y + obstacles[j].radius + 10) - (obstacles[j].y - obstacles[j].radius - 10) * Math.random();
-                    const dx = x - obstacles[j].x;
-                    const dy = y - obstacles[j].y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    if (distance < shieldItems.radius + obstacles[j].radius) {
-                        if (dx < 0) {
-                            x -= (shieldItems.radius - distance + 5);
-                        }
-                        else {
-                            x += (shieldItems.radius - distance + 5);
-                        }
-                        if (dy < 0) {
-                            y -= (shieldItems.radius - distance + 5);
-                        }
-                        else {
-                            y += (shieldItems.radius - distance + 5);
-                        }
-                    }
-                    if (
-                        x < shieldItems.radius ||
-                        x > canvas.width - shieldItems.radius ||
-                        y < shieldItems.radius ||
-                        y > canvas.height - shieldItems.radius
-                    ) {
-                        continue;
-                    }
-                    if (!shieldItems.length && shieldItems.length <= maxShieldItem) {
-                        shieldItems.push(new ShieldsItem(x, y, canvas));
-                    }
-                }
-            }
-        }
+// 生成能量饮料
+function generateSpeedItem(x, y) {
+    let type = Math.random() * 100;
+    if (type < 25) {
+        type = 0;
     }
+    else if (type < 50) {
+        type = 1;
+    }
+    else if (type < 75) {
+        type = 2;
+    }
+    else {
+        type = 3;
+    }
+    speedItems.push(new SpeedItem(x, y, type, canvas));
+}
+
+// 生成护盾药水
+function generateShieldItem(x, y) {
+    shieldItems.push(new ShieldsItem(x, y, canvas));
 }
 
 // 拾取道具
@@ -179,24 +137,26 @@ export function collectItem() {
         if (distance < player.radius + speedItems[i].radius) {
             // 人物和道具碰撞
             if (isTheFirst1) {
-                headTips.push(new HeadTips("拾取该道具后，将获得5s的速度加成", canvas))
-                //alert("拾取该道具后，将获得5s的速度加成");
+                headTips.push(new HeadTips("拾取能量饮料后，将获得一段时间的速度加成", canvas))
                 setIsTheFirst1(false);
             }
-            speedItems.splice(i, 1); // 移除道具
-            if (!SpeedItem.isAmplified) {
-                SpeedItem.isAmplified = true;
-                SpeedItem.duration = 5;
-                player.speed += 3;
-                const timer2 = setInterval(function () {
-                    SpeedItem.duration--;
-                    if (SpeedItem.duration <= 0) {
-                        clearInterval(timer2);
-                        SpeedItem.isAmplified = false;
-                        player.speed = 5;
-                    }
-                }, 1000);
+            if (speedItems[i].type == 0) {
+                player.addSpeed = 3;
+                player.speedUpTime = 3600;
             }
+            else if (speedItems[i].type == 1) {
+                player.addSpeed = 2;
+                player.speedUpTime = 1800;
+            }
+            else if (speedItems[i].type == 2) {
+                player.addSpeed = 1;
+                player.speedUpTime = 1800;
+            }
+            else {
+                player.addSpeed = 0.5;
+                player.speedUpTime = 1800;
+            }
+            speedItems.splice(i, 1); // 移除道具
         }
     }
     for (let j = 0; j < shieldItems.length; j++) {
@@ -206,8 +166,7 @@ export function collectItem() {
 
         if (distance2 < player.radius + shieldItems[j].radius) {
             if (isTheFirst2) {
-                headTips.push(new HeadTips("拾取该道具时，获得一定量的护盾", canvas));
-                //alert("拾取该道具时，获得一定量的护盾");
+                headTips.push(new HeadTips("拾取护盾药水时，获得一定量的护盾", canvas));
                 setIsTheFirst2(false);
             }
             if (player.shield < 100) {

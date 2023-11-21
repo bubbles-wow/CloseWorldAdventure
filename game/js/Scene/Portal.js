@@ -7,6 +7,8 @@ import { obstacles, littlePlants } from "../Scene/Obstacle.js";
 import { dropLoots } from "./DropLoot.js";
 import { shieldItems, speedItems } from "./item.js";
 
+import { HeadTips, headTips } from "../Particle/Tips.js";
+
 export class Portal {
     constructor(x, y, canvas) {
         this.x = x; // 传送门 x 坐标
@@ -80,8 +82,10 @@ export function checkPlayerInPortal() {
 
 // 生成传送门
 export function generatePortal() {
+    // let x = canvas.width / 2 + (Math.random() - 0.5) * 100;
+    // let y = canvas.height / 2 + (Math.random() - 0.5) * 100;
     let x = Math.random() * canvas.width;
-    let y = Math.random() * canvas.height;
+    let y = Math.random() * canvas.height
     obstacles.forEach(obstacle => {
         let dx = obstacle.x - x;
         let dy = obstacle.y - y;
@@ -116,6 +120,7 @@ export function generatePortal() {
         y -= 32;
     }
     portal.push(new Portal(x, y, canvas));
+    headTips.push(new HeadTips("传送门出现了！赶快进入下一阶段的冒险吧！", canvas))
 }
 
 export function refreshScene() {

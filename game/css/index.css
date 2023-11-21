@@ -4,6 +4,7 @@ body {
     height: auto;
     margin: 0;
     padding: 0;
+    overflow-x: hidden;
     z-index: 100;
 }
 
@@ -53,19 +54,19 @@ body {
 }
 
 #helpScreen {
-    background-color: rgba(233, 233, 233, 0.8);
-    border-radius: 10px;
+    background-color: rgba(200, 200, 200, 0.8);
+    backdrop-filter: blur(5px);
     position: absolute;
     flex-direction: column;
     font-size: 15px;
     top: 0;
     left: 0;
-    width: calc(100% - 100px);
+    width: 50%;
     height: auto;
-    overflow-y: auto;
     display: none;
     z-index: 50;
-    padding: 50px;
+    padding-left: 20%;
+    padding-right: 30%;
 }
 
 #Canvas {
@@ -87,6 +88,234 @@ body {
     }
 }
 
+@keyframes playerRunning {
+    0% {
+        background-position: 0 -211px;
+    }
+
+    4.166666666666667% {
+        background-position: -48px -211px;
+    }
+
+    8.333333333333334% {
+        background-position: -96px -211px;
+    }
+
+    12.5% {
+        background-position: -144px -211px;
+    }
+
+    16.666666666666668% {
+        background-position: -192px -211px;
+    }
+
+    20.833333333333336% {
+        background-position: -240px -211px;
+    }
+
+    25% {
+        background-position: 0 -259px;
+    }
+
+    29.166666666666668% {
+        background-position: -48px -259px;
+    }
+
+    33.333333333333336% {
+        background-position: -96px -259px;
+    }
+
+    37.5% {
+        background-position: -144px -259px;
+    }
+
+    41.66666666666667% {
+        background-position: -192px -259px;
+    }
+
+    45.833333333333336% {
+        background-position: -240px -259px;
+    }
+
+    50% {
+        background-position: 0 -307px;
+    }
+
+    54.16666666666667% {
+        background-position: -48px -307px;
+    }
+
+    58.333333333333336% {
+        background-position: -96px -307px;
+    }
+
+    62.5% {
+        background-position: -144px -307px;
+    }
+
+    66.66666666666667% {
+        background-position: -192px -307px;
+    }
+
+    70.83333333333334% {
+        background-position: -240px -307px;
+    }
+
+    75% {
+        background-position: 0px -355px;
+    }
+
+    79.16666666666667% {
+        background-position: -48px -355px;
+    }
+
+    83.33333333333334% {
+        background-position: -96px -355px;
+    }
+
+    87.5% {
+        background-position: -144px -355px;
+    }
+
+    91.66666666666667% {
+        background-position: -192px -355px;
+    }
+
+    95.83333333333334% {
+        background-position: -240px -355px;
+    }
+
+    100% {
+        background-position: 0px -403px;
+    }
+}
+
+@keyframes playerCloseAttack {
+    0% {
+        background-position: 0 -406px;
+    }
+
+    6.25% {
+        background-position: -48px -406px;
+    }
+
+    12.5% {
+        background-position: -96px -406px;
+    }
+
+    18.75% {
+        background-position: -144px -406px;
+    }
+
+    25% {
+        background-position: 0 -454px;
+    }
+
+    31.25% {
+        background-position: -48px -454px;
+    }
+
+    37.5% {
+        background-position: -96px -454px;
+    }
+
+    43.75% {
+        background-position: -144px -454px;
+    }
+
+    50% {
+        background-position: 0px -502px;
+    }
+
+    56.25% {
+        background-position: -48px -502px;
+    }
+
+    62.5% {
+        background-position: -96px -502px;
+    }
+
+    68.75% {
+        background-position: -144px -502px;
+    }
+
+    75% {
+        background-position: 0px -550px;
+    }
+
+    81.25% {
+        background-position: -48px -550px;
+    }
+
+    87.5% {
+        background-position: -96px -550px;
+    }
+
+    93.75% {
+        background-position: -144px -550px;
+    }
+
+    100% {
+        background-position: 0px -598px;
+    }
+}
+
+@keyframes playerShoot {
+    0% {
+        background-position: 0 -646px;
+    }
+
+    100% {
+        background-position: -192px -646px;
+    }
+}
+
+@keyframes playerRest {
+    0% {
+        background-position: 0 -70px;
+    }
+
+    10% {
+        background-position: 0 -598px;
+    }
+
+    20% {
+        background-position: -48px -598px;
+    }
+
+    30% {
+        background-position: -96px -598px;
+    }
+
+    40% {
+        background-position: -96px -598px;
+    }
+
+    50% {
+        background-position: -96px -598px;
+    }
+
+    60% {
+        background-position: -96px -598px;
+    }
+
+    70% {
+        background-position: -96px -598px;
+    }
+
+    80% {
+        background-position: -96px -598px;
+    }
+
+    90% {
+        background-position: -96px -598px;
+    }
+
+    100% {
+        background-position: -96px -598px;
+    }
+}
+
 @keyframes monsters {
     0% {
         background-position: 0 -28px;
@@ -103,11 +332,21 @@ body {
     }
 
     100% {
-        background-position: -188px 0;
+        background-position: -235px 0;
     }
 }
 
-@keyframes speedItems {
+@keyframes portal {
+    0% {
+        background-position: 0 0;
+    }
+
+    100% {
+        background-position: -256px 0;
+    }
+}
+
+@keyframes speedItem {
     0% {
         background-position: 0 0;
     }
@@ -127,52 +366,127 @@ body {
     transform: scale(2);
 }
 
-#monsterAnimation {
+#playerRunningAnimation {
     width: 48px;
+    height: 24px;
+    background-image: url("../res/player.png");
+    image-rendering: pixelated;
+    animation: playerRunning 4s steps(1) infinite;
+    transform: scale(2);
+}
+
+#playerCloseAttackAnimation {
+    width: 48px;
+    height: 26px;
+    background-image: url("../res/player.png");
+    image-rendering: pixelated;
+    animation: playerCloseAttack 4s steps(1) infinite;
+    transform: scale(2);
+}
+
+#playerShootAnimation {
+    width: 48px;
+    height: 21px;
+    background-image: url("../res/player.png");
+    image-rendering: pixelated;
+    animation: playerShoot 1s steps(4) infinite;
+    transform: scale(2);
+}
+
+#playerRestAnimation {
+    width: 48px;
+    height: 21px;
+    background-image: url("../res/player.png");
+    image-rendering: pixelated;
+    animation: playerRest 2s steps(1) infinite;
+    transform: scale(2);
+
+}
+
+#monsterAnimation {
+    width: 45px;
     height: 15px;
     background-image: url("../res/skeleton1.png");
     image-rendering: pixelated;
     animation: monsters 0.67s steps(4) infinite;
     transform: scale(2.8);
+    margin-left: 3px;
 }
 
 #rangedMonsterAnimation {
-    width: 48px;
+    width: 45px;
     height: 15px;
     background-image: url("../res/skeleton2.png");
     image-rendering: pixelated;
     animation: monsters 0.67s steps(4) infinite;
     transform: scale(2.8);
+    margin-left: 3px;
 }
 
 #bomberAnimation {
-    width: 48px;
+    width: 46px;
     height: 15px;
     background-image: url("../res/skull.png");
     image-rendering: pixelated;
     animation: monsters 0.67s steps(4) infinite;
     transform: scale(2.9);
+    margin-left: 2px;
 }
 
 #obstacleAnimation {
     width: 47px;
     height: 64px;
-    background-image: url("../res/trees.png");
+    background-image: url("../res/tree.png");
     image-rendering: pixelated;
-    animation: obstacles 4s steps(4) infinite;
+    animation: obstacles 5s steps(5) infinite;
     transform: scale(1);
     top: 10px;
 }
 
-#speedItemsAnimation {
-    width: 24px;
-    height: 55px;
-    background-image: url("../res/speedItems.png");
+#portalAnimation {
+    width: 32px;
+    height: 32px;
+    background-image: url("../res/portal.png");
     image-rendering: pixelated;
-    animation: speedItems 4s steps(4) infinite;
-    transform: scale(1);
+    animation: portal 1s steps(8) infinite;
+    transform: scale(1.5);
+    margin-top: 8px !important;
+    margin-left: 8px;
+    margin-right: 8px !important;
+}
+
+#speedItemAnimation {
+    width: 24px;
+    height: 39px;
+    background-image: url("../res/speedItem.png");
+    image-rendering: pixelated;
+    animation: speedItem 4s steps(4) infinite;
+    transform: scale(1.5);
+    margin-top: 12px !important;
     margin-left: 12px;
     margin-right: 12px !important;
+}
+
+#shieldItemAnimation {
+    width: 16px;
+    height: 16px;
+    background-image: url("../res/shieldItem.png");
+    image-rendering: pixelated;
+    transform: scale(3);
+    margin-top: 12px !important;
+    margin-left: 16px;
+    margin-right: 16px !important;
+}
+
+#dropLootAnimation {
+    width: 16px;
+    height: 16px;
+    background-image: url("../res/dropLoot.png");
+    image-rendering: pixelated;
+    transform: scale(3);
+    margin-top: 12px !important;
+    margin-left: 16px;
+    margin-right: 16px !important;
 }
 
 .introduction {
@@ -194,5 +508,6 @@ body {
 
 .text {
     position: relative;
+    width: 80%;
     left: 60px;
 }

@@ -1,4 +1,4 @@
-import { canvas, isHelp, isPause, isStart, setIsPause } from "../Game/Core.js";
+import { canvas, isHelp, isPause, isStart, killedMonsters, setIsPause, setKilledMonsters } from "../Game/Core.js";
 
 import { Bullet, bullets } from "../Player/Bullet.js";
 import { StrengthenedBullet, strengthenedBullets } from "../Player/Skill.js";
@@ -10,6 +10,7 @@ import { bombers } from "../Monster/Bomber.js";
 import { obstacles } from "../Scene/Obstacle.js";
 
 import { generateBloodSplash } from "../Particle/BloodParticle.js";
+import { generateDropLoot } from "../Scene/DropLoot.js";
 
 export class Player {
     constructor(canvas) {
@@ -38,6 +39,8 @@ export class Player {
         this.isCloseAttack = false; // 玩家是否近战攻击
         this.isShootArrow = false; // 玩家是否射箭
         this.direction = "s"; // 玩家朝向
+        this.speedUpTime = 0; // 玩家加速持续时间
+        this.addSpeed = 0; // 玩家加速增量
         this.rewardReceived = {
             damage: false,
             current: false
@@ -54,8 +57,6 @@ export class Player {
             this.x = newX;
             this.y = newY;
         }
-
-        this.avoidObstacles();
     }
 
     damageByMonsterBullet(monsterbullet) {
@@ -415,8 +416,10 @@ export function handleRightClick(event) {
                 monsters[i].knockback(player.knockbackDistance, dx / distance, dy / distance);
                 monsters[i].health -= player.damage;
                 if (monsters[i].health <= 0) {
+                    generateDropLoot(monsters[i].x, monsters[i].y)
                     player.score += monsters[i].score; // 增加玩家得分
                     monsters.splice(i, 1); // 移除生命值为 0 的怪物
+                    setKilledMonsters(killedMonsters + 1);
                     i--;
                 }
             }
@@ -457,8 +460,10 @@ export function handleRightClick(event) {
                 rangedMonsters[i].knockback(player.knockbackDistance, dx / distance, dy / distance);
                 rangedMonsters[i].health -= player.damage;
                 if (rangedMonsters[i].health <= 0) {
+                    generateDropLoot(rangedMonsters[i].x, rangedMonsters[i].y)
                     player.score += rangedMonsters[i].score; // 增加玩家得分
                     rangedMonsters.splice(i, 1); // 移除生命值为 0 的怪物
+                    setKilledMonsters(killedMonsters + 1);
                     i--;
                 }
             }
@@ -500,8 +505,10 @@ export function handleRightClick(event) {
                 bombers[i].knockback(player.knockbackDistance, dx / distance, dy / distance);
                 bombers[i].health -= player.damage;
                 if (bombers[i].health <= 0) {
+                    generateDropLoot(bombers[i].x, bombers[i].y)
                     player.score += bombers[i].score; // 增加玩家得分
                     bombers.splice(i, 1); // 移除生命值为 0 的怪物
+                    setKilledMonsters(killedMonsters + 1);
                     i--;
                 }
             }
@@ -599,7 +606,13 @@ export function updatePlayerSpeed() {
     if (player.health <= 0) {
         return;
     }
-    let speed = player.speed;
+    if (player.speedUpTime > 0) {
+        player.speedUpTime--;
+    }
+    else {
+        player.addSpeed = 0;
+    }
+    let speed = player.speed + player.addSpeed;
     if (player.isShootArrow) {
         speed = player.shootingSpeed;
     }
