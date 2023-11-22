@@ -51,6 +51,7 @@ export function gameStart() {
             task = "击败敌人。"
             let position = generatePosition();
             generateMonster(position.x, position.y, position.pursuitPlayerDistance);
+            monsters[0].avoidObstacles();
             arrowTips.push(new ArrowTips(monsters[0].x, monsters[0].y - monsters[0].radius - 35, 3, canvas));
             showTips[step] = true;
         }
@@ -59,6 +60,7 @@ export function gameStart() {
             task = "击败敌人。"
             let position = generatePosition();
             generateRangedMonster(position.x, position.y, position.pursuitPlayerDistance);
+            rangedMonsters[0].avoidObstacles();
             arrowTips.push(new ArrowTips(rangedMonsters[0].x, rangedMonsters[0].y - rangedMonsters[0].radius - 35, 3, canvas));
             showTips[step] = true;
         }
@@ -67,6 +69,7 @@ export function gameStart() {
             task = "击败敌人。"
             let position = generatePosition();
             generateBomber(position.x, position.y, position.pursuitPlayerDistance);
+            bombers[0].avoidObstacles();
             arrowTips.push(new ArrowTips(bombers[0].x, bombers[0].y - bombers[0].radius - 35, 3, canvas));
             showTips[step] = true;
         }
@@ -126,7 +129,7 @@ export function gameStart() {
             }
             else {
                 arrowTips[0].x = monsters[0].x;
-                arrowTips[0].y = monsters[0].y - monsters[0].radius - 30;
+                arrowTips[0].y = monsters[0].y - monsters[0].radius - 35;
             }
         }
         if (step == 5) {
@@ -139,7 +142,7 @@ export function gameStart() {
             }
             else {
                 arrowTips[0].x = rangedMonsters[0].x;
-                arrowTips[0].y = rangedMonsters[0].y - rangedMonsters[0].radius - 30;
+                arrowTips[0].y = rangedMonsters[0].y - rangedMonsters[0].radius - 35;
             }
         }
         if (step == 6) {
@@ -152,7 +155,7 @@ export function gameStart() {
             }
             else {
                 arrowTips[0].x = bombers[0].x;
-                arrowTips[0].y = bombers[0].y - bombers[0].radius - 30;
+                arrowTips[0].y = bombers[0].y - bombers[0].radius - 35;
             }
         }
         if (step == 7) {

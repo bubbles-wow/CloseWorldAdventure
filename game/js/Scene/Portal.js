@@ -23,6 +23,23 @@ export class Portal {
         this.RefreshSceneRadius = 1;
     }
 
+    avoidObstacles() {
+        for (let i = 0; i < obstacles.length; i++) {
+            let dx = this.x - obstacles[i].x;
+            let dy = this.y - obstacles[i].y;
+            let distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance < this.radius + obstacles[i].radius) {
+                let avoidDistance = this.radius + obstacles[i].radius - distance;
+                let directionX = dx / distance;
+                let directionY = dy / distance;
+                let newX = this.x + directionX * avoidDistance;
+                let newY = this.y + directionY * avoidDistance;
+                this.x = newX;
+                this.y = newY;
+            }
+        }
+    }
+
     // 绘制传送门
     draw() {
         let imageDirectionX = 32 * Math.floor(this.animationFrame / 8);
@@ -85,26 +102,7 @@ export function generatePortal() {
     // let x = canvas.width / 2 + (Math.random() - 0.5) * 100;
     // let y = canvas.height / 2 + (Math.random() - 0.5) * 100;
     let x = Math.random() * canvas.width;
-    let y = Math.random() * canvas.height
-    obstacles.forEach(obstacle => {
-        let dx = obstacle.x - x;
-        let dy = obstacle.y - y;
-        let distance = Math.sqrt(dx * dx + dy * dy)
-        if (distance < obstacle.radius + Portal.radius) {
-            if (dx < 0) {
-                x -= obstacle.radius + Portal.radius;
-            }
-            else {
-                x += obstacle.radius + Portal.radius;
-            }
-            if (dy < 0) {
-                y -= obstacle.radius + Portal.radius;
-            }
-            else {
-                y += obstacle.radius + Portal.radius;
-            }
-        }
-    });
+    let y = Math.random() * canvas.height;
     if (x < 32) {
         x += 32;
     }
@@ -120,6 +118,7 @@ export function generatePortal() {
         y -= 32;
     }
     portal.push(new Portal(x, y, canvas));
+    portal[0].avoidObstacles();
     headTips.push(new HeadTips("传送门出现了！赶快进入下一阶段的冒险吧！", canvas))
 }
 
