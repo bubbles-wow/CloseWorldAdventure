@@ -97,6 +97,7 @@ function generateMonsters() {
     }
 }
 
+// 更新元素的位置
 function updateScene() {
     updateBomberExplosions();
     updateBulletExplosions();
@@ -109,6 +110,7 @@ function updateScene() {
     moveStrengthenedBullets();
 }
 
+// 检查血量的减少
 function checkDamage() {
     checkBulletMonsterCollision();
     checkMonsterBulletPlayerCollision()
@@ -131,7 +133,6 @@ function draw() {
     }
     shieldItems.forEach((shieldItem) => shieldItem.draw());
     speedItems.forEach((speedItem) => speedItem.draw());
-    shieldItems.forEach((shieldItem) => shieldItem.draw());
     dropLoots.forEach((dropLoot) => dropLoot.draw());
     bullets.forEach((bullet) => bullet.draw());
     strengthenedBullets.forEach((strengthenedBullet) => strengthenedBullet.draw());

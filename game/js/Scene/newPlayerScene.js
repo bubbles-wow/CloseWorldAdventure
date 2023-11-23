@@ -1,4 +1,4 @@
-import { canvas, setIsStart, setMonsterWave, monsterWave, skipButton, helpButton } from "../Game/Core.js";
+import { canvas, setIsStart, setMonsterWave, monsterWave, skipButton, helpButton, setKilledMonsters } from "../Game/Core.js";
 
 import { player } from "../Player/Player.js";
 import { bullets } from "../Player/Bullet.js";
@@ -187,6 +187,7 @@ export function gameStart() {
         if (portal.length == 0) {
             //monsterWave++;
             setMonsterWave(monsterWave + 1);
+            setKilledMonsters(0);
             let count = Math.floor(monsterWave / 4 + 1);
             headTips.push(new HeadTips("第 " + count + " 间", canvas));
             setIsStart(false);
