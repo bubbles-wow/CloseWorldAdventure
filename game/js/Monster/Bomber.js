@@ -61,6 +61,7 @@ export class Bomber {
             let dy = monsters[i].y - this.y;
             let distanceToMonster = Math.sqrt(dx * dx + dy * dy);
             if (distanceToMonster < this.bombRadius + monsters[i].radius + this.bombRadius) {
+                generateBloodSplash(monsters[i].x, monsters[i].y);
                 monsters[i].health -= this.damage;
                 if (monsters[i].health <= 0) {
                     monsters.splice(i, 1);
@@ -78,6 +79,7 @@ export class Bomber {
             let dy = rangedMonsters[i].y - this.y;
             let distanceToRangedMonster = Math.sqrt(dx * dx + dy * dy);
             if (distanceToRangedMonster < this.bombRadius + rangedMonsters[i].radius + this.bombRadius) {
+                generateBloodSplash(rangedMonsters[i].x, rangedMonsters[i].y);
                 rangedMonsters[i].health -= this.damage;
                 if (rangedMonsters[i].health <= 0) {
                     rangedMonsters.splice(i, 1);
@@ -98,6 +100,7 @@ export class Bomber {
             let dy = bombers[i].y - this.y;
             let distanceToBomber = Math.sqrt(dx * dx + dy * dy);
             if (distanceToBomber < this.bombRadius + bombers[i].radius + this.bombRadius) {
+                generateBloodSplash(bombers[i].x, bombers[i].y);
                 bombers[i].health -= this.damage;
                 if (bombers[i].health <= 0) {
                     bombers.splice(i, 1);
