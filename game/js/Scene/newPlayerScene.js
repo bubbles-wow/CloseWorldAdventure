@@ -154,8 +154,17 @@ export function gameStart() {
                 headTips.push(new HeadTips("干得漂亮！", canvas));
             }
             else {
-                arrowTips[0].x = bombers[0].x;
-                arrowTips[0].y = bombers[0].y - bombers[0].radius - 35;
+                if (bombers[0].isDead) {
+                    stepDone = true;
+                    arrowTips.length = 0;
+                    player.health = player.currentHealth;
+                    player.score = 0;
+                    headTips.push(new HeadTips("干得漂亮！", canvas));
+                }
+                else {
+                    arrowTips[0].x = bombers[0].x;
+                    arrowTips[0].y = bombers[0].y - bombers[0].radius - 35;
+                }
             }
         }
         if (step == 7) {
